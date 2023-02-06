@@ -1,7 +1,9 @@
+
+
+--返回值
 --     * 1 -> 库存不足
 --     * 2 -> 重复下单
 --     * 0 -> 下单成功
-
 
 -- 1.参数列表
 -- 1.1.优惠券id
@@ -19,7 +21,7 @@ local orderKey = 'seckill:order:' .. voucherId
 
 -- 3.脚本业务
 -- 3.1.判断库存是否充足 get stockKey
-if (tonumber(redis.call('get', stockKey)) <= 0) then
+if (tonumber(redis.call('get', stockKey))   <= 0) then
     --redis取出的是string,转number进行0比对
     -- 3.2.库存不足，返回1
     return 1
@@ -36,3 +38,5 @@ redis.call('sadd', orderKey, userId)
 -- 3.6.发送消息到队列中， XADD stream.orders * k1 v1 k2 v2 ...
 redis.call('xadd', 'stream.orders', '*', 'userId', userId, 'voucherId', voucherId, 'id', orderId)
 return 0
+
+--接受消息由java开启线程任务,持续监听redis-stream
