@@ -1,5 +1,7 @@
 package com.hmdp.service.impl;
 
+import static com.hmdp.utils.RedisConstants.SECKILL_STOCK_KEY;
+
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.Result;
@@ -47,10 +49,16 @@ public class VoucherOrderServiceImpl extends
   private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
 
   static {
+    /**
+     * 1 -> 库存不足
+     * 2 -> 重复下单
+     * 0 -> 下单成功
+     */
     SECKILL_SCRIPT = new DefaultRedisScript<>();
     SECKILL_SCRIPT.setLocation(new ClassPathResource("seckill.lua"));
     SECKILL_SCRIPT.setResultType(Long.class);
   }
+
 
   @Resource
   private ISeckillVoucherService seckillVoucherService;
@@ -131,6 +139,11 @@ public class VoucherOrderServiceImpl extends
 
   @Override
   public Result seckillVoucher(Long voucherId) {
+    // 检查voucherId是否存在数据库
+    boolean check = checkVoucher(voucherId);
+    if (!check) {
+      return Result.fail("voucher not exist!");
+    }
     Long userId = UserHolder.getUser().getId();
     long orderId = redisIdWorker.nextId("order");
     // 1.执行lua脚本
@@ -151,6 +164,11 @@ public class VoucherOrderServiceImpl extends
     //  保存到redis-mq里面去,开新线程异步执行sql
     // 3.返回订单id
     return Result.ok(orderId);
+  }
+
+  private boolean checkVoucher(Long voucherId) {
+    String s = stringRedisTemplate.opsForValue().get(SECKILL_STOCK_KEY+voucherId);
+    return s != null;
   }
 
   private class VoucherOrderHandler implements Runnable {

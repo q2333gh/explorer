@@ -26,9 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
  * 前端控制器
  * </p>
  *
- *
- *
- *
  * @author b
  */
 @Slf4j
@@ -57,9 +54,9 @@ public class UserController {
    * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
    */
   @PostMapping("/login")
-  public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session) {
+  public Result login(@RequestBody LoginFormDTO loginForm) {
     // 实现登录功能
-    return userService.login(loginForm, session);
+    return userService.login(loginForm);
   }
 
   /**

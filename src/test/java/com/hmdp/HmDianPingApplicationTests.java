@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -37,26 +38,35 @@ class HmDianPingApplicationTests {
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
-  private ExecutorService es = Executors.newFixedThreadPool(500);
+//  @Resource
+  private final ExecutorService es = Executors.newFixedThreadPool(500);
 
   @Test
   void testIdWorker() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(300);
+    AtomicLong idsNum= new AtomicLong(0L);
 
+    int t=300;
+    CountDownLatch latch = new CountDownLatch(t);//timer inside each thread.
     Runnable task = () -> {
       for (int i = 0; i < 100; i++) {
         long id = redisIdWorker.nextId("order");
-        System.out.println("id = " + id);
+//        System.out.println("id = " + id);
+        idsNum.getAndIncrement();
       }
       latch.countDown();
     };
     long begin = System.currentTimeMillis();
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < t; i++) {
       es.submit(task);
     }
     latch.await();
     long end = System.currentTimeMillis();
-    System.out.println("time = " + (end - begin));
+    long delta=(end - begin);
+
+    System.out.println("time = " + delta+"ms");
+    System.out.println("idsNum = "+idsNum);
+    double gps=idsNum.doubleValue()/((double) delta/1000);
+    System.out.println("generating speed : "+gps+" id/s");
   }
 
   @Test
@@ -114,5 +124,11 @@ class HmDianPingApplicationTests {
     long id = 1;
     //    Result x = cacheClient.queryWithPassThrough("x", id, Shop.class, shopService.queryById(id), 10,
     //        TimeUnit.MINUTES);
+  }
+
+  @Test
+  void testSecKill(){
+    String s = stringRedisTemplate.opsForValue().get("seckill:stock:15");
+    System.out.println("aaa"+s);
   }
 }

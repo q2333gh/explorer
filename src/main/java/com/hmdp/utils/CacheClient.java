@@ -20,7 +20,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class CacheClient {
 
+  //thread pool .for perf.don`t need repeatlly create destroy with IO.
   private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
+
   private final StringRedisTemplate stringRedisTemplate;
 
   public CacheClient(StringRedisTemplate stringRedisTemplate) {
@@ -71,27 +73,29 @@ public class CacheClient {
     return r;
   }
 
-  public <R, ID> R queryWithLogicalExpire(
-      String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time,
-      TimeUnit unit) {
+  public <R, ID>
+  R queryWithLogicalExpire(
+      String keyPrefix, ID id,//id可能是Long或者String都有可能
+      Class<R> type, Function<ID, R> dbFallback,
+      Long time, TimeUnit unit) {
     String key = keyPrefix + id;
-    // 1.从redis查询商铺缓存
+    // 1.从redis查询缓存
     String json = stringRedisTemplate.opsForValue().get(key);
     // 2.判断是否存在
     if (StrUtil.isBlank(json)) {
-      // 3.存在，直接返回
+      // 3.不存在，直接返回
       return null;
     }
     // 4.命中，需要先把json反序列化为对象
     RedisData redisData = JSONUtil.toBean(json, RedisData.class);
-    R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);
+    R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);//默认是JSONObject类,toBean反序列化
     LocalDateTime expireTime = redisData.getExpireTime();
     // 5.判断是否过期
     if (expireTime.isAfter(LocalDateTime.now())) {
       // 5.1.未过期，直接返回店铺信息
       return r;
     }
-    // 5.2.已过期，需要缓存重建
+    // 5.2.已过期，需要尝试缓存重建
     // 6.缓存重建
     // 6.1.获取互斥锁
     String lockKey = LOCK_SHOP_KEY + id;
@@ -168,6 +172,7 @@ public class CacheClient {
   }
 
   private boolean tryLock(String key) {
+    //setnx
     Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", 10, TimeUnit.SECONDS);
     return BooleanUtil.isTrue(flag);
   }

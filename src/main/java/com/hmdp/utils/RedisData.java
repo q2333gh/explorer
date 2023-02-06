@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
-public class RedisData {
+public class RedisData {//enhance redis data structure with LET(in java)
 
-  private LocalDateTime expireTime;
-  private Object data;
+  private LocalDateTime expireTime;//use for logical expire.not redisTTL
+  private Object data;//link to the obj
 }
