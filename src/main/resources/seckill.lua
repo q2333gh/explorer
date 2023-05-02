@@ -1,4 +1,5 @@
-
+--确保消息队列存在:
+--127.0.0.1:6379> XGROUP CREATE stream.orders g1 0 MKSTREAM
 
 --返回值
 --     * 1 -> 库存不足

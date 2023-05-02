@@ -48,12 +48,12 @@ public class VoucherOrderServiceImpl extends
   private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
   private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
 
+  /**
+   * 1 -> 库存不足
+   * 2 -> 重复下单
+   * 0 -> 下单成功
+   */
   static {
-    /**
-     * 1 -> 库存不足
-     * 2 -> 重复下单
-     * 0 -> 下单成功
-     */
     SECKILL_SCRIPT = new DefaultRedisScript<>();
     SECKILL_SCRIPT.setLocation(new ClassPathResource("seckill.lua"));
     SECKILL_SCRIPT.setResultType(Long.class);
@@ -119,23 +119,6 @@ public class VoucherOrderServiceImpl extends
     }
   }
 
-    /*private BlockingQueue<VoucherOrder> orderTasks = new ArrayBlockingQueue<>(1024 * 1024);
-    private class VoucherOrderHandler implements Runnable{
-
-        @Override
-        public void run() {
-            while (true){
-                try {
-                    // 1.获取队列中的订单信息
-                    VoucherOrder voucherOrder = orderTasks.take();
-                    // 2.创建订单
-                    createVoucherOrder(voucherOrder);
-                } catch (Exception e) {
-                    log.error("处理订单异常", e);
-                }
-            }
-        }
-    }*/
 
   @Override
   public Result seckillVoucher(Long voucherId) {
@@ -162,7 +145,6 @@ public class VoucherOrderServiceImpl extends
     }
     //  保存voucher-orders到redis-mq里面去,稍后再开新线程异步执行sql
 
-
     // 3.返回订单id
     return Result.ok(orderId);
   }
@@ -172,6 +154,7 @@ public class VoucherOrderServiceImpl extends
     return s != null;
   }
 
+//  @SuppressWarnings("all")
   private class VoucherOrderHandler implements Runnable {
 
     @Override
@@ -188,7 +171,11 @@ public class VoucherOrderServiceImpl extends
           // 2.判断订单信息是否为空
           if (list == null || list.isEmpty()) {
             // 如果为null，说明没有消息，继续下一次循环
-            continue;
+//            Thread.sleep(100);  ->debug use
+//           break ->  debug use for
+            break;
+//            prod use continue.
+//            continue;
           }
           // 解析数据
           MapRecord<String, Object, Object> record = list.get(0);
@@ -200,11 +187,11 @@ public class VoucherOrderServiceImpl extends
           stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
         } catch (Exception e) {
           log.error("处理订单异常", e);
-          try {
-            handlePendingList();
-          } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-          }
+//          try {
+//            handlePendingList();
+//          } catch (InterruptedException ex) {
+//            throw new RuntimeException(ex);
+//          }
         }
       }
     }
@@ -235,11 +222,32 @@ public class VoucherOrderServiceImpl extends
         } catch (Exception e) {
           log.error("处理订单异常", e);
           Thread.sleep(20);
-          //无需递归,会回到取主消息队列的位置
+          //无需递归调用自己了,会回到取主消息队列的位置
         }
       }
     }
   }
+
+
+
+      /*private BlockingQueue<VoucherOrder> orderTasks = new ArrayBlockingQueue<>(1024 * 1024);
+    private class VoucherOrderHandler implements Runnable{
+
+        @Override
+        public void run() {
+            while (true){
+                try {
+                    // 1.获取队列中的订单信息
+                    VoucherOrder voucherOrder = orderTasks.take();
+                    // 2.创建订单
+                    createVoucherOrder(voucherOrder);
+                } catch (Exception e) {
+                    log.error("处理订单异常", e);
+                }
+            }
+        }
+    }*/
+
 
     /*@Override
     public Result seckillVoucher(Long voucherId) {
