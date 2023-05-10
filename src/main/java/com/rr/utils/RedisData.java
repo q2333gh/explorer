@@ -3,6 +3,9 @@ package com.rr.utils;
 import java.time.LocalDateTime;
 import lombok.Data;
 
+/**
+ *
+ */
 @Data
 public class RedisData {//enhance redis data structure with LET(in java)
 

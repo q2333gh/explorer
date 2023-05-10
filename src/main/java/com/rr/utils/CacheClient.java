@@ -29,18 +29,6 @@ public class CacheClient {
     this.stringRedisTemplate = stringRedisTemplate;
   }
 
-  public void set(String key, Object value, Long time, TimeUnit unit) {
-    stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(value), time, unit);
-  }
-
-  public void setWithLogicalExpire(String key, Object value, Long time, TimeUnit unit) {
-    // 设置逻辑过期
-    RedisData redisData = new RedisData();
-    redisData.setData(value);
-    redisData.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(time)));
-    // 写入Redis
-    stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisData));
-  }
 
   /**
    *
@@ -83,77 +71,35 @@ public class CacheClient {
     return r;
   }
 
-  private String get(String key) {
-    String json = stringRedisTemplate.opsForValue().get(key);
-    return json;
-  }
 
 
-  public <R, ID>
-  R queryWithLogicalExpire(
-      String keyPrefix, ID id,//id可能是Long或者String都有可能
-      Class<R> type, Function<ID, R> dbFallback,
-      Long time, TimeUnit unit) {
-    String key = keyPrefix + id;
-    // 1.从redis查询缓存
-    String json = get(key);
-    // 2.判断是否存在
-    if (StrUtil.isBlank(json)) {
-      // 3.不存在，直接返回
-      return null;
-    }
-    // 4.命中，需要先把json反序列化为对象
-    RedisData redisData = JSONUtil.toBean(json, RedisData.class);
-    R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);//默认是JSONObject类,toBean反序列化
-    LocalDateTime expireTime = redisData.getExpireTime();
-    // 5.判断是否过期
-    if (expireTime.isAfter(LocalDateTime.now())) {
-      // 5.1.未过期，直接返回店铺信息
-      return r;
-    }
-    // 5.2.已过期，需要尝试缓存重建
-    // 6.缓存重建
-    // 6.1.获取互斥锁
-    String lockKey = LOCK_SHOP_KEY + id;
-    boolean isLock = tryLock(lockKey);
-    // 6.2.判断是否获取锁成功
-    if (isLock) {
-      // 6.3.成功，开启独立线程，实现缓存重建
-      CACHE_REBUILD_EXECUTOR.submit(() -> {
-        try {
-          // 查询数据库
-          R newR = dbFallback.apply(id);
-          // 重建缓存
-          this.setWithLogicalExpire(key, newR, time, unit);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        } finally {
-          // 释放锁
-          unlock(lockKey);
-        }
-      });
-    }
-    // 6.4.返回过期的商铺信息
-    return r;
-  }
-
+  /**
+   * use mutex to  make parallelization  to serialization,
+   * also built in with passThrough protection.(set null obj)
+   * @param keyPrefix
+   * @param id
+   * @param type
+   * @param dbFallback
+   * @param duration
+   * @param unit
+   * @return
+   * @param <R>
+   * @param <ID>
+   */
   public <R, ID> R queryWithMutex(
-      String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time,
+      String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long duration,
       TimeUnit unit) {
     String key = keyPrefix + id;
     // 1.从redis查询商铺缓存
     String shopJson = get(key);
     // 2.判断是否存在
     if (StrUtil.isNotBlank(shopJson)) {
-      // 3.存在，直接返回
-      return JSONUtil.toBean(shopJson, type);
+      return getBean(type, shopJson);
     }
     // 判断命中的是否是空值
     if (shopJson != null) {
-      // 返回一个错误信息
       return null;
     }
-
     // 4.实现缓存重建
     // 4.1.获取互斥锁
     String lockKey = LOCK_SHOP_KEY + id;
@@ -164,19 +110,20 @@ public class CacheClient {
       if (!isLock) {
         // 4.3.获取锁失败，休眠并重试
         Thread.sleep(50);
-        return queryWithMutex(keyPrefix, id, type, dbFallback, time, unit);
+        //goto the beginning to query redis.
+        return queryWithMutex(keyPrefix, id, type, dbFallback, duration, unit);
       }
       // 4.4.获取锁成功，根据id查询数据库
       r = dbFallback.apply(id);
+      Thread.sleep(200);//simulate remote call DB via network.time longer ,need higher reliable of mutex
       // 5.不存在，返回错误
       if (r == null) {
         // 将空值写入redis
-        stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
-        // 返回错误信息
+        set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
         return null;
       }
       // 6.存在，写入redis
-      this.set(key, r, time, unit);
+      set(key, r, duration, unit);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } finally {
@@ -187,13 +134,114 @@ public class CacheClient {
     return r;
   }
 
+  public <R, ID>
+  R queryWithLogicalExpire(
+      String keyPrefix, ID id,//id可能是Long或者String都有可能
+      Class<R> type, Function<ID, R> dbFallback,
+      Long duration, TimeUnit unit) {
+    var key = keyPrefix + id;
+    // 1.从redis查询缓存
+    var json = get(key);
+    // 2.判断是否存在
+    if (StrUtil.isBlank(json)) {
+      // 3.不存在，直接返回
+      return null;
+    }
+    var redisData = deserialize(json);
+    R r = deserialize(type, redisData);
+    var expireTime = redisData.getExpireTime();
+    // 5.判断是否过期
+    if (expireTime.isAfter(LocalDateTime.now())) {
+      // 5.1.未过期，直接返回店铺信息
+      return r;
+    }
+    // 5.2.已过期，需要尝试缓存重建
+    // 6.缓存重建
+    // 6.1.获取互斥锁
+    var lockKey = LOCK_SHOP_KEY + id;
+    var isLock = tryLock(lockKey);
+    // 6.2.判断是否获取锁成功
+    if (isLock) {
+      // 6.3.成功，开启独立线程，实现缓存重建
+      CACHE_REBUILD_EXECUTOR.submit(() -> {
+        try {
+          // 查询数据库
+          R newR = dbFallback.apply(id);
+          // 重建缓存
+          setWithLogicalExpire(key, newR, duration, unit);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        } finally {
+          // 释放锁
+          unlock(lockKey);
+        }
+      });
+    }
+    // 6.4.未获取到锁,返回过期的商铺信息
+    return r;
+  }
+
+  private static <R> R deserialize(Class<R> type, RedisData redisData) {
+    R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);//默认是JSONObject类,toBean反序列化
+    return r;
+  }
+
+  private static RedisData deserialize(String json) {
+    RedisData redisData = JSONUtil.toBean(json, RedisData.class);
+    return redisData;
+  }
+
+
+  /**
+   * Redis get
+   * @param key
+   * @return
+   */
+  private String get(String key) {
+    String json = stringRedisTemplate.opsForValue().get(key);
+    return json;
+  }
+
+
+  private static <R> R getBean(Class<R> type, String shopJson) {
+    return JSONUtil.toBean(shopJson, type);
+  }
+
+  /**
+   * thread-safe mutex .
+   * @param key
+   * @return  get lock or not
+   */
   private boolean tryLock(String key) {
-    //setnx
-    Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", 10, TimeUnit.SECONDS);
-    return BooleanUtil.isTrue(flag);
+    //Redis-command: setnx k v  (if key not exist)
+    return setnx(key);
+  }
+
+  private Boolean setnx(String key) {
+    return BooleanUtil.isTrue(stringRedisTemplate.opsForValue().
+        setIfAbsent(key, "1", 10, TimeUnit.SECONDS)) ;
   }
 
   private void unlock(String key) {
+    delete(key);
+  }
+
+  private void delete(String key) {
     stringRedisTemplate.delete(key);
   }
+
+
+  private void set(String key, Object value, Long duration, TimeUnit unit) {
+    stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(value), duration, unit);
+  }
+
+  private void setWithLogicalExpire(String key, Object value, Long duration, TimeUnit unit) {
+    // 设置逻辑过期
+    RedisData redisData = new RedisData();
+    redisData.setData(value);
+    redisData.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(duration)));
+    // 写入Redis
+    stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisData));
+  }
+
 }

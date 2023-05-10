@@ -74,6 +74,7 @@ public class VoucherOrderServiceImpl extends
     //   这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
     //   而如果我们没有创建队列的话，就会一直抛异常。
     //    可以先在redis里面创建MQ 再 启动java
+    //    创建MQ的命令:
 //    SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
   }
 

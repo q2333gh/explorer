@@ -36,7 +36,7 @@ import static com.rr.utils.RedisConstants.LOGIN_CODE_KEY;
 
 /**
  * 使用前提：
- *  1.有糊涂工具类的依赖
+ *  1.有hutool工具类的依赖
  *  2.登陆功能会返回验证码，用户不存在会自动注册，且用phone字段来进行登陆。
  */
 @SpringBootTest
@@ -142,7 +142,8 @@ class VoucherOrderControllerTest222 {
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andReturn().getResponse().getContentAsString();
     result = mapper.readerFor(Result.class).readValue(tokenJson);
-    Assert.isTrue(result.getSuccess(), String.format("获取“%s”手机号的token失败,json为“%s”", phone, json));
+    Assert.isTrue(result.getSuccess(), String.format(
+        "获取“%s”手机号的token失败,json为“%s”", phone, json));
     String token = result.getData().toString();
     return token;
   }
@@ -155,7 +156,8 @@ class VoucherOrderControllerTest222 {
       file.createNewFile();
     }
     // 2. 输出
-    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
+    BufferedWriter bw = new BufferedWriter(
+        new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
     for (String content : list) {
       bw.write(content);
       bw.newLine();
