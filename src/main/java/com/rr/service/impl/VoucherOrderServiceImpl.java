@@ -71,9 +71,10 @@ public class VoucherOrderServiceImpl extends
 
   @PostConstruct//借助spring.在当前类初始化完毕立即执行下列函数,AOP的一个应用
   private void init() {
-    //   这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，而如果我们没有创建队列的话，就会一直抛异常。
+    //   这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
+    //   而如果我们没有创建队列的话，就会一直抛异常。
     //    可以先在redis里面创建MQ 再 启动java
-    SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
+//    SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
   }
 
   private void createVoucherOrder(VoucherOrder voucherOrder) {

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.rr.dto.LoginFormDTO;
 import com.rr.dto.Result;
 import com.rr.entity.User;
-import javax.servlet.http.HttpSession;
 
 /**
  * <p>
@@ -16,7 +15,7 @@ import javax.servlet.http.HttpSession;
  */
 public interface IUserService extends IService<User> {
 
-  Result sendCode(String phone, HttpSession session);
+  Result sendCode(String phone);
 
   Result login(LoginFormDTO loginForm);
 

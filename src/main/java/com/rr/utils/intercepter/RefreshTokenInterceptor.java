@@ -1,4 +1,4 @@
-package com.rr.utils;
+package com.rr.utils.intercepter;
 
 import static com.rr.utils.RedisConstants.LOGIN_USER_KEY;
 import static com.rr.utils.RedisConstants.LOGIN_USER_TTL;
@@ -6,6 +6,7 @@ import static com.rr.utils.RedisConstants.LOGIN_USER_TTL;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.rr.dto.UserDTO;
+import com.rr.utils.UserHolder;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +30,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
     if (StrUtil.isBlank(token)) {
       return true;
     }
-    // 2.基于TOKEN获取redis中的用户
+    // 2.基于TOKEN获取Redis中的用户
     String key = LOGIN_USER_KEY + token;
     Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
     // 3.判断用户是否存在

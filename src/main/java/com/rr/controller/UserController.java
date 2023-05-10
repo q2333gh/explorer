@@ -21,13 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * <p>
- * 前端控制器
- * </p>
- *
- * @author b
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/user")
@@ -43,9 +37,8 @@ public class UserController {
    * 发送手机验证码
    */
   @PostMapping("code")
-  public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
-    // 发送短信验证码并保存验证码
-    return userService.sendCode(phone, session);
+  public Result sendCode(@RequestParam("phone") String phone) {
+    return userService.sendCode(phone);
   }
 
   /**

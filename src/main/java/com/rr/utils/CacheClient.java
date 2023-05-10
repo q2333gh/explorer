@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CacheClient {
 
-  //thread pool .for perf.don`t need repeatlly create destroy with IO.
+  //thread pool .for perf.don`t need repeatly create & destroy with IO.
   private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
   private final StringRedisTemplate stringRedisTemplate;
@@ -42,12 +42,24 @@ public class CacheClient {
     stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisData));
   }
 
+  /**
+   *
+   * @param keyPrefix
+   * @param id
+   * @param type user defined type
+   * @param dbFallback , A HoF
+   * @param duration
+   * @param unit
+   * @return user defined type
+   * @param <R>
+   * @param <ID>
+   */
   public <R, ID> R queryWithPassThrough(
       String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback,
-      Long time, TimeUnit unit) {
+      Long duration, TimeUnit unit) {
     String key = keyPrefix + id;
     // 1.从redis查询商铺缓存
-    String json = stringRedisTemplate.opsForValue().get(key);
+    String json = get(key);
     // 2.判断是否存在
     if (StrUtil.isNotBlank(json)) {
       // 3.存在，直接返回
@@ -58,20 +70,24 @@ public class CacheClient {
       // 返回一个错误信息
       return null;
     }
-
-    // 4.不存在，根据id查询数据库
+    // 4.不存在，根据id查询数据库,一个HoF的实例
     R r = dbFallback.apply(id);
     // 5.不存在，返回错误
     if (r == null) {
-      // 将空值写入redis
+      // 将空值写入redis,防止黑客一直查询数据库造成数据库关闭
       stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
-      // 返回错误信息
       return null;
     }
     // 6.存在，写入redis
-    this.set(key, r, time, unit);
+    this.set(key, r, duration, unit);
     return r;
   }
+
+  private String get(String key) {
+    String json = stringRedisTemplate.opsForValue().get(key);
+    return json;
+  }
+
 
   public <R, ID>
   R queryWithLogicalExpire(
@@ -80,7 +96,7 @@ public class CacheClient {
       Long time, TimeUnit unit) {
     String key = keyPrefix + id;
     // 1.从redis查询缓存
-    String json = stringRedisTemplate.opsForValue().get(key);
+    String json = get(key);
     // 2.判断是否存在
     if (StrUtil.isBlank(json)) {
       // 3.不存在，直接返回
@@ -126,7 +142,7 @@ public class CacheClient {
       TimeUnit unit) {
     String key = keyPrefix + id;
     // 1.从redis查询商铺缓存
-    String shopJson = stringRedisTemplate.opsForValue().get(key);
+    String shopJson = get(key);
     // 2.判断是否存在
     if (StrUtil.isNotBlank(shopJson)) {
       // 3.存在，直接返回

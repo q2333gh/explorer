@@ -1,7 +1,7 @@
 package com.rr.config;
 
-import com.rr.utils.LoginInterceptor;
-import com.rr.utils.RefreshTokenInterceptor;
+import com.rr.utils.intercepter.LoginInterceptor;
+import com.rr.utils.intercepter.RefreshTokenInterceptor;
 import javax.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,6 +23,7 @@ public class MvcConfig implements WebMvcConfigurer {
     // 登录拦截器
     registry.addInterceptor(new LoginInterceptor())
         .excludePathPatterns(
+            "/**",  // this line  for test
             "/shop/**",
             "/voucher/**",
             "/shop-type/**",
