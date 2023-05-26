@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rr.dto.Result;
 import com.rr.entity.Shop;
 import com.rr.service.IShopService;
-import com.rr.utils.SystemConstants;
+import com.rr.utils.constants.SystemConstants;
 import javax.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

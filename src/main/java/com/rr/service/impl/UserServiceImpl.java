@@ -1,11 +1,11 @@
 package com.rr.service.impl;
 
-import static com.rr.utils.RedisConstants.LOGIN_CODE_KEY;
-import static com.rr.utils.RedisConstants.LOGIN_CODE_TTL;
-import static com.rr.utils.RedisConstants.LOGIN_USER_KEY;
-import static com.rr.utils.RedisConstants.LOGIN_USER_TTL;
-import static com.rr.utils.RedisConstants.USER_SIGN_KEY;
-import static com.rr.utils.SystemConstants.USER_NICK_NAME_PREFIX;
+import static com.rr.utils.constants.RedisConstants.LOGIN_CODE_KEY;
+import static com.rr.utils.constants.RedisConstants.LOGIN_CODE_TTL;
+import static com.rr.utils.constants.RedisConstants.LOGIN_USER_KEY;
+import static com.rr.utils.constants.RedisConstants.LOGIN_USER_TTL;
+import static com.rr.utils.constants.RedisConstants.USER_SIGN_KEY;
+import static com.rr.utils.constants.SystemConstants.USER_NICK_NAME_PREFIX;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
@@ -18,9 +18,8 @@ import com.rr.dto.UserDTO;
 import com.rr.entity.User;
 import com.rr.mapper.UserMapper;
 import com.rr.service.IUserService;
-import com.rr.utils.RegexUtils;
+import com.rr.utils.regexUtils.RegexUtils;
 import com.rr.utils.UserHolder;
-import com.rr.utils.validation.ParamValidate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;

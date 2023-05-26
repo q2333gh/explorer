@@ -1,4 +1,4 @@
-package com.rr.utils;
+package com.rr.utils.distributedLock;
 
 import cn.hutool.core.lang.UUID;
 import java.util.Collections;
@@ -17,7 +17,7 @@ public class SimpleRedisLock implements ILock {
 
   static {
     UNLOCK_SCRIPT = new DefaultRedisScript<>();//这里()可以直接硬编码
-    UNLOCK_SCRIPT.setLocation(new ClassPathResource("unlock.lua"));//may cause io exception
+    UNLOCK_SCRIPT.setLocation(new ClassPathResource("scripts/unlock.lua"));//may cause io exception
     UNLOCK_SCRIPT.setResultType(Long.class);
   }//提前读取脚本到内存.减少IO,
   //    static: 在java启动时就请求操作
@@ -34,7 +34,7 @@ public class SimpleRedisLock implements ILock {
   public boolean tryLock(long timeoutSec) {
     // 获取线程标示
     String threadId = ID_PREFIX + Thread.currentThread().getId();
-    // 获取锁 setnx
+    // 获取锁 set lock thread1 NX EX 10
     Boolean success = stringRedisTemplate.opsForValue()
         .setIfAbsent(KEY_PREFIX + name, threadId, timeoutSec, TimeUnit.SECONDS);
     return Boolean.TRUE.equals(success);//手动拆箱,suc 返回的是null也能最后返回false
@@ -48,16 +48,5 @@ public class SimpleRedisLock implements ILock {
         Collections.singletonList(KEY_PREFIX + name),//吧key string放到java-List里面去
         ID_PREFIX + Thread.currentThread().getId());
   }
-    /*@Override
-    public void unlock() {
-        // 获取线程标示
-        String threadId = ID_PREFIX + Thread.currentThread().getId();
-        // 获取锁中的标示
-        String id = stringRedisTemplate.opsForValue().get(KEY_PREFIX + name);
-        // 判断标示是否一致
-        if(threadId.equals(id)) {
-            // 释放锁
-            stringRedisTemplate.delete(KEY_PREFIX + name);
-        }
-    }*/
+
 }

@@ -3,7 +3,7 @@ package com.rr.controller;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.rr.dto.Result;
-import com.rr.utils.SystemConstants;
+import com.rr.utils.constants.SystemConstants;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;

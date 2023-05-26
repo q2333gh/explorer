@@ -1,4 +1,4 @@
-package com.rr.utils;
+package com.rr.utils.cacheClient;
 
 import java.time.LocalDateTime;
 import lombok.Data;

@@ -6,7 +6,7 @@ import com.rr.dto.Result;
 import com.rr.dto.UserDTO;
 import com.rr.entity.Blog;
 import com.rr.service.IBlogService;
-import com.rr.utils.SystemConstants;
+import com.rr.utils.constants.SystemConstants;
 import com.rr.utils.UserHolder;
 import java.util.List;
 import javax.annotation.Resource;

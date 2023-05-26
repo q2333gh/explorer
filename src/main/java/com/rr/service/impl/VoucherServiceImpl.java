@@ -1,6 +1,6 @@
 package com.rr.service.impl;
 
-import static com.rr.utils.RedisConstants.SECKILL_STOCK_KEY;
+import static com.rr.utils.constants.RedisConstants.SECKILL_STOCK_KEY;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.rr.dto.Result;

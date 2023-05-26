@@ -1,4 +1,4 @@
-package com.rr.utils;
+package com.rr.utils.distributedLock;
 
 public interface ILock {
 

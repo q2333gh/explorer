@@ -6,10 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @MapperScan("com.rr.mapper")
 @SpringBootApplication
-public class RealReviewApplication {
-
+public class ExplorerApplication {
   public static void main(String[] args) {
-    SpringApplication.run(RealReviewApplication.class, args);
+    SpringApplication.run(ExplorerApplication.class, args);
   }
 
 }

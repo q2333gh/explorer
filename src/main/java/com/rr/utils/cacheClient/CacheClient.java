@@ -1,7 +1,7 @@
-package com.rr.utils;
+package com.rr.utils.cacheClient;
 
-import static com.rr.utils.RedisConstants.CACHE_NULL_TTL;
-import static com.rr.utils.RedisConstants.LOCK_SHOP_KEY;
+import static com.rr.utils.constants.RedisConstants.CACHE_NULL_TTL;
+import static com.rr.utils.constants.RedisConstants.LOCK_SHOP_KEY;
 
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CacheClient {
 
-  //thread pool .for perf.don`t need repeatly create & destroy with IO.
+  //thread pool .for performance.don`t need repeat create & destroy with IO.
   private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
   private final StringRedisTemplate stringRedisTemplate;
@@ -30,18 +30,7 @@ public class CacheClient {
   }
 
 
-  /**
-   *
-   * @param keyPrefix
-   * @param id
-   * @param type user defined type
-   * @param dbFallback , A HoF
-   * @param duration
-   * @param unit
-   * @return user defined type
-   * @param <R>
-   * @param <ID>
-   */
+
   public <R, ID> R queryWithPassThrough(
       String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback,
       Long duration, TimeUnit unit) {
@@ -63,7 +52,7 @@ public class CacheClient {
     // 5.不存在，返回错误
     if (r == null) {
       // 将空值写入redis,防止黑客一直查询数据库造成数据库关闭
-      stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
+      set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
       return null;
     }
     // 6.存在，写入redis
@@ -76,15 +65,6 @@ public class CacheClient {
   /**
    * use mutex to  make parallelization  to serialization,
    * also built in with passThrough protection.(set null obj)
-   * @param keyPrefix
-   * @param id
-   * @param type
-   * @param dbFallback
-   * @param duration
-   * @param unit
-   * @return
-   * @param <R>
-   * @param <ID>
    */
   public <R, ID> R queryWithMutex(
       String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long duration,
@@ -103,7 +83,7 @@ public class CacheClient {
     // 4.实现缓存重建
     // 4.1.获取互斥锁
     String lockKey = LOCK_SHOP_KEY + id;
-    R r = null;
+    R r ;
     try {
       boolean isLock = tryLock(lockKey);
       // 4.2.判断是否获取成功
@@ -139,17 +119,17 @@ public class CacheClient {
       String keyPrefix, ID id,//id可能是Long或者String都有可能
       Class<R> type, Function<ID, R> dbFallback,
       Long duration, TimeUnit unit) {
-    var key = keyPrefix + id;
+    String key = keyPrefix + id;
     // 1.从redis查询缓存
-    var json = get(key);
+    String json = get(key);
     // 2.判断是否存在
     if (StrUtil.isBlank(json)) {
       // 3.不存在，直接返回
       return null;
     }
-    var redisData = deserialize(json);
+    RedisData redisData = deserialize(json);
     R r = deserialize(type, redisData);
-    var expireTime = redisData.getExpireTime();
+    LocalDateTime expireTime = redisData.getExpireTime();
     // 5.判断是否过期
     if (expireTime.isAfter(LocalDateTime.now())) {
       // 5.1.未过期，直接返回店铺信息
@@ -158,8 +138,8 @@ public class CacheClient {
     // 5.2.已过期，需要尝试缓存重建
     // 6.缓存重建
     // 6.1.获取互斥锁
-    var lockKey = LOCK_SHOP_KEY + id;
-    var isLock = tryLock(lockKey);
+    String lockKey = LOCK_SHOP_KEY + id;
+    boolean isLock = tryLock(lockKey);
     // 6.2.判断是否获取锁成功
     if (isLock) {
       // 6.3.成功，开启独立线程，实现缓存重建
@@ -182,24 +162,19 @@ public class CacheClient {
   }
 
   private static <R> R deserialize(Class<R> type, RedisData redisData) {
-    R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);//默认是JSONObject类,toBean反序列化
-    return r;
+    return JSONUtil.toBean((JSONObject) redisData.getData(), type);
   }
 
   private static RedisData deserialize(String json) {
-    RedisData redisData = JSONUtil.toBean(json, RedisData.class);
-    return redisData;
+    return JSONUtil.toBean(json, RedisData.class);
   }
 
 
   /**
    * Redis get
-   * @param key
-   * @return
    */
   private String get(String key) {
-    String json = stringRedisTemplate.opsForValue().get(key);
-    return json;
+    return stringRedisTemplate.opsForValue().get(key);
   }
 
 
@@ -209,7 +184,7 @@ public class CacheClient {
 
   /**
    * thread-safe mutex .
-   * @param key
+   * @param key key
    * @return  get lock or not
    */
   private boolean tryLock(String key) {

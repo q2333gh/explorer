@@ -1,7 +1,7 @@
 package com.rr.utils.intercepter;
 
-import static com.rr.utils.RedisConstants.LOGIN_USER_KEY;
-import static com.rr.utils.RedisConstants.LOGIN_USER_TTL;
+import static com.rr.utils.constants.RedisConstants.LOGIN_USER_KEY;
+import static com.rr.utils.constants.RedisConstants.LOGIN_USER_TTL;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;

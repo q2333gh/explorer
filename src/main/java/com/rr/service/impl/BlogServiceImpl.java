@@ -1,7 +1,7 @@
 package com.rr.service.impl;
 
-import static com.rr.utils.RedisConstants.BLOG_LIKED_KEY;
-import static com.rr.utils.RedisConstants.FEED_KEY;
+import static com.rr.utils.constants.RedisConstants.BLOG_LIKED_KEY;
+import static com.rr.utils.constants.RedisConstants.FEED_KEY;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
@@ -17,7 +17,7 @@ import com.rr.mapper.BlogMapper;
 import com.rr.service.IBlogService;
 import com.rr.service.IFollowService;
 import com.rr.service.IUserService;
-import com.rr.utils.SystemConstants;
+import com.rr.utils.constants.SystemConstants;
 import com.rr.utils.UserHolder;
 import java.util.ArrayList;
 import java.util.Collections;

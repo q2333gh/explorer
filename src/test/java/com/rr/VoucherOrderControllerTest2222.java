@@ -32,7 +32,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import static com.rr.utils.RedisConstants.LOGIN_CODE_KEY;
+import static com.rr.utils.constants.RedisConstants.LOGIN_CODE_KEY;
 
 /**
  * 使用前提：

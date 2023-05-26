@@ -1,19 +1,16 @@
 package com.rr;
 
-import static com.rr.utils.RedisConstants.CACHE_SHOP_KEY;
-import static com.rr.utils.RedisConstants.SHOP_GEO_KEY;
+import static com.rr.utils.constants.RedisConstants.SHOP_GEO_KEY;
 
 import com.rr.entity.Shop;
 import com.rr.service.impl.ShopServiceImpl;
-import com.rr.utils.CacheClient;
-import com.rr.utils.RedisIdWorker;
+import com.rr.utils.DistributeIdWorker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -24,49 +21,48 @@ import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 @SpringBootTest
-class RealReviewApplicationTests {
+class ExplorerApplicationTests {
 
-  @Resource
-  private CacheClient cacheClient;
+//  @Resource
+//  private CacheClient cacheClient;
 
   @Resource
   private ShopServiceImpl shopService;
 
   @Resource
-  private RedisIdWorker redisIdWorker;
+  private DistributeIdWorker distributeIdWorker;
 
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
 //  @Resource
-  private final ExecutorService es = Executors.newFixedThreadPool(500);
+  private final ExecutorService threads = Executors.newFixedThreadPool(1000);
 
   @Test
-  void testIdWorker() throws InterruptedException {
-    AtomicLong idsNum= new AtomicLong(0L);
-
-    int t=300;
-    CountDownLatch latch = new CountDownLatch(t);//timer inside each thread.
-    Runnable task = () -> {
+  void testIdWorkerPerf() throws InterruptedException {
+    AtomicLong idsCount= new AtomicLong(0L);//thread-safe number
+    int tasks=500;
+    CountDownLatch latch = new CountDownLatch(tasks);//timer inside each thread.
+    Runnable task = () -> {//asycronized
       for (int i = 0; i < 100; i++) {
-        long id = redisIdWorker.nextId("order");
+        long id = distributeIdWorker.nextId("test");
 //        System.out.println("id = " + id);
-        idsNum.getAndIncrement();
+        idsCount.getAndIncrement();
       }
       latch.countDown();
     };
     long begin = System.currentTimeMillis();
-    for (int i = 0; i < t; i++) {
-      es.submit(task);
+    for (int i = 0; i < tasks; i++) {
+      threads.submit(task);
     }
     latch.await();
     long end = System.currentTimeMillis();
     long delta=(end - begin);
 
     System.out.println("time = " + delta+"ms");
-    System.out.println("idsNum = "+idsNum);
-    double gps=idsNum.doubleValue()/((double) delta/1000);
-    System.out.println("generating speed : "+gps+" id/s");
+    System.out.println("idsCount = "+idsCount);
+    double v=idsCount.doubleValue()/((double) delta/1000);
+    System.out.println("generating speed : "+v+" id/s");
   }
 
   @Test

@@ -1,7 +1,7 @@
 package com.rr.utils.validation;
 
 import com.rr.dto.Result;
-import com.rr.utils.RegexUtils;
+import com.rr.utils.regexUtils.RegexUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;

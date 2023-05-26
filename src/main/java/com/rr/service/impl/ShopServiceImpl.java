@@ -1,8 +1,8 @@
 package com.rr.service.impl;
 
-import static com.rr.utils.RedisConstants.CACHE_SHOP_KEY;
-import static com.rr.utils.RedisConstants.CACHE_SHOP_TTL;
-import static com.rr.utils.RedisConstants.SHOP_GEO_KEY;
+import static com.rr.utils.constants.RedisConstants.CACHE_SHOP_KEY;
+import static com.rr.utils.constants.RedisConstants.CACHE_SHOP_TTL;
+import static com.rr.utils.constants.RedisConstants.SHOP_GEO_KEY;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,8 +11,8 @@ import com.rr.dto.Result;
 import com.rr.entity.Shop;
 import com.rr.mapper.ShopMapper;
 import com.rr.service.IShopService;
-import com.rr.utils.CacheClient;
-import com.rr.utils.SystemConstants;
+import com.rr.utils.cacheClient.CacheClient;
+import com.rr.utils.constants.SystemConstants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
