@@ -14,7 +14,12 @@ on ubuntu:(need sequential)
       3.you can package and run proj.jar
 
 u can use maven package ,and get jar file
-run the jar  in background mode:
+run the jar in background mode:
+  nohup java -jar your-app.jar &
+command explain:
+  & : In your case, it means to run the command in the background and
+    return the shell prompt immediately without waiting for the command to finish.
+  nohup: used to tell a process to ignore any SIGHUP (hang up) signals that it receives.
 
 
 

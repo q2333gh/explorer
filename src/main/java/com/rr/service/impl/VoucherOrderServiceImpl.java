@@ -14,6 +14,7 @@ import com.rr.service.ISeckillVoucherService;
 import com.rr.service.IVoucherOrderService;
 import com.rr.utils.DistributeIdWorker;
 import com.rr.utils.UserHolder;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -40,24 +42,15 @@ public class VoucherOrderServiceImpl extends
     ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
   private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
   /**
-   * Thread-pool
+  ThreadPool
    */
   private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
 
-
-
-  /**
-    1 -> 库存不足
-    2 -> 重复下单
-    0 -> 下单成功
-   */
   private enum OrderStatus {
     SUCCESS(0),
     INSUFFICIENT_INVENTORY(1),
     DUPLICATE_ORDER(2);
-
     private final int code;
-
     OrderStatus(int code) {
       this.code = code;
     }
@@ -65,7 +58,6 @@ public class VoucherOrderServiceImpl extends
       return code;
     }
   }
-
 
   static {
     SECKILL_SCRIPT = new DefaultRedisScript<>();
@@ -85,33 +77,40 @@ public class VoucherOrderServiceImpl extends
   @PostConstruct//借助Spring.在当前类初始化完毕立即执行下列函数,AOP的一个应用
   private void init() {
     //   这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
-    //   而如果我们没有创建队列的话，就会一直抛异常。
-    //    可以先在redis里面创建MQ 再 启动java
-    //    创建MQ的命令: XGROUP CREATE stream.orders g1 0 MKSTREAM
+    //   而如果我们没有创建队列的话,就会一直抛异常。
+    //   先在redis里面创建MQ 再启动Java,创建MQ的命令: XGROUP CREATE stream.orders g1 0 MKSTREAM
     SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
   }
 
   @Override
   public Result seckillVoucher(Long voucherId) {
-    if (!Exist(voucherId)) {
-      return Result.fail("voucher not exist!");
-    }
+    if (!Exist(voucherId)) { return Result.fail("voucher not exist!"); }
     Long userId = UserHolder.getUser().getId();
     long orderId = distributeIdWorker.nextId("order");
-    Long result = stringRedisTemplate.execute(
+
+    Long result = execSeckill(voucherId, userId, orderId);
+
+    return ret(orderId, result);
+  }
+
+  private static Result ret(long orderId, Long result) {
+    if (result == null) {
+      return Result.fail("query failed");
+    }
+    int res = result.intValue();//long -> int ;narrow convert;truncation
+    if (res != Success()) {
+      return Result.fail(res == Insufficient() ?
+          "inventory insufficient" : "not allow duplicate order");
+    }
+    return Result.ok(orderId);
+  }
+
+  private Long execSeckill(Long voucherId, Long userId, long orderId) {
+    return stringRedisTemplate.execute(
         SECKILL_SCRIPT,
         Collections.emptyList(),//give empty list instead of null
         voucherId.toString(), userId.toString(), String.valueOf(orderId)
     );
-    if (result == null) {
-      return Result.fail("query failed");
-    }
-    int rValue = result.intValue();//long -> int ;narrow convert;truncation
-    if (rValue != Success()) {
-      return Result.fail(rValue == Insufficient() ?
-          "inventory insufficient" : "not allow duplicate order");
-    }
-    return Result.ok(orderId);
   }
 
   private void createVoucherOrder(VoucherOrder voucherOrder) {
@@ -120,21 +119,18 @@ public class VoucherOrderServiceImpl extends
     RLock redisLock = redissonClient.getLock(LOCK_ORDER + userId);
     boolean isLock = redisLock.tryLock();
     if (!isLock) {
-      log.error("不允许重复下单！");
+      log.error(notAllowDuplicate());
       return;
     }
     try {
-      int count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
+      int count = isDuplicated(userId, voucherId);
       if (count > 0) {
-        log.error("不允许重复下单！");
+        log.error(notAllowDuplicate());
         return;
       }
-      boolean success = seckillVoucherService.update()
-          .setSql("stock = stock - 1")
-          .eq("voucher_id", voucherId).gt("stock", 0)
-          .update();
+      boolean success = submit(voucherId);
       if (!success) {
-        log.error("库存不足！");
+        log.error(insufficient());
         return;
       }
       save(voucherOrder);
@@ -142,6 +138,26 @@ public class VoucherOrderServiceImpl extends
       redisLock.unlock();
     }
   }
+
+  private static String insufficient() {
+    return "库存不足！";
+  }
+
+  private static String notAllowDuplicate() {
+    return "不允许重复下单！";
+  }
+
+  private boolean submit(Long voucherId) {
+    return seckillVoucherService.update()
+        .setSql("stock = stock - 1")
+        .eq("voucher_id", voucherId).gt("stock", 0)
+        .update();
+  }
+
+  private Integer isDuplicated(Long userId, Long voucherId) {
+    return query().eq("user_id", userId).eq("voucher_id", voucherId).count();
+  }
+
   private class VoucherOrderHandler implements Runnable {
     @Override
     public void run() {
@@ -161,39 +177,46 @@ public class VoucherOrderServiceImpl extends
       }
     }
 
+    /**
+     * @return true->consume 1  false->empty
+     */
+    @Transactional
     private boolean tryOrder() {
-      // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
-      //count maybe many,so return List ;here only 1
-      List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
-          Consumer.from("g1", "c1"),
-          StreamReadOptions.empty().count(1),
-          StreamOffset.create(STREAM_ORDERS, ReadOffset.from("0"))
-      );
+      List<MapRecord<String, Object, Object>> list = streamDequeue();      //count maybe many,so return List ;here only 1
       if (list == null || list.isEmpty()) {
         // 如果为null，说明没有消息，继续下一次循环
         //            Thread.sleep(100);  ->debug use
-        //            break ->  debug ;  prod -> continue.
         return true;
-//            continue;
       }
       MapRecord<String, Object, Object> record = list.get(0);
       createVoucherOrder(GetBean(record.getValue()));
-      ack(record);
+      streamAck(record);
       return false;
     }
 
-    private void ack(MapRecord<String, Object, Object> record) {
+    /**
+     * 获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
+     */
+    @SuppressWarnings("unchecked")
+    private List<MapRecord<String, Object, Object>> streamDequeue() {
+      return stringRedisTemplate.opsForStream().read(
+          Consumer.from("g1", "c1"),
+          StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+          StreamOffset.create(STREAM_ORDERS, ReadOffset.from("0"))
+      );
+    }
+
+    private void streamAck(MapRecord<String, Object, Object> record) {
       stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
     }
 
     /**
      * 处理取了没消费的未确认订单,确保拿走的订单都要消费
      */
+    @SuppressWarnings("all")
     private void handlePendingList() throws InterruptedException {
       while (true) {
         try {
-          // 1.获取pending-list中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 0
-          //          0 -> 代表读取PendingList
           if (tryOrder()) {
             break;
           }
@@ -206,8 +229,7 @@ public class VoucherOrderServiceImpl extends
     }
   }
 
-
-  public static VoucherOrder GetBean(Map<Object, Object> value) {
+  private static VoucherOrder GetBean(Map<Object, Object> value) {
     return BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
   }
   private static int Insufficient() {

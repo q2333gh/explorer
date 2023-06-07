@@ -18,8 +18,8 @@ import com.rr.dto.UserDTO;
 import com.rr.entity.User;
 import com.rr.mapper.UserMapper;
 import com.rr.service.IUserService;
-import com.rr.utils.regexUtils.RegexUtils;
 import com.rr.utils.UserHolder;
+import com.rr.utils.regexUtils.RegexUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -90,11 +90,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
   private static Map<String, Object> trans2Map(User user) {
     UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-    Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(),
+    return BeanUtil.beanToMap(userDTO, new HashMap<>(),
         CopyOptions.create()
             .setIgnoreNullValue(true)
             .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
-    return userMap;
   }
 
   @Override

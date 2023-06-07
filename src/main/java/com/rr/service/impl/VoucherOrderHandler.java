@@ -1,6 +1,6 @@
 package com.rr.service.impl;
 
-import static com.rr.service.impl.VoucherOrderServiceImpl.GetBean;
+//import static com.rr.service.impl.VoucherOrderServiceImpl.GetBean;
 import static com.rr.utils.constants.RedisConstants.STREAM_ORDERS;
 import static java.lang.Thread.sleep;
 

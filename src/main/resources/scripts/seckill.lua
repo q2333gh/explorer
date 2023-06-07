@@ -16,18 +16,16 @@ local orderId = ARGV[3]
 local stockKey = 'seckill:stock:' .. voucherId -- Lua syntax: 字符串拼接用 ..
 local orderKey = 'seckill:order:' .. voucherId
 
---          >>> 脚本业务
-if (tonumber(redis.call('get', stockKey))   <= 0) then --判断库存是否充足,redis取出的是string,转number进行0比对
-    return 1    -- 库存不足
+if (tonumber(redis.call('get', stockKey)) <= 0) then  --判断库存是否充足,Redis取出的是string,转number进行0比对,底层使用Set数据结构
+  return 1    -- 库存不足
 end
-if (redis.call('sismember', orderKey, userId) == 1) then-- 3.2.判断用户是否下单 SISMEMBER orderKey userId
-    return 2     -- 重复下单
+if (redis.call('sismember', orderKey, userId) == 1) then  --3.2.判断用户是否下单 SISMEMBER orderKey userId
+  return 2     -- 重复下单
 end
 redis.call('incrby', stockKey, -1)-- 3.4.扣库存 incrby stockKey -1
 redis.call('sadd', orderKey, userId)-- 3.5.下单（保存用户）sadd orderKey userId
--- 3.6.发送消息到队列中， XADD stream.orders * k1 v1 k2 v2 ...
-redis.call('xadd', 'stream.orders', '*', 'userId', userId, 'voucherId', voucherId, 'id', orderId)
+redis.call('xadd', 'stream.orders', '*', 'userId', userId, 'voucherId', voucherId, 'id', orderId)-- 3.6.发送消息到队列中， XADD stream.orders * k1 v1 k2 v2 ...
 return 0 --下单成功
 
---          >>> next java stuff:
+--          >>> next Java stuff:
 --接受消息由java开启线程任务,持续监听redis-stream

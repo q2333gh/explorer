@@ -11,7 +11,6 @@ import com.rr.service.IUserInfoService;
 import com.rr.service.IUserService;
 import com.rr.utils.UserHolder;
 import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

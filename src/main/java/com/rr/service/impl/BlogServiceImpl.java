@@ -17,11 +17,12 @@ import com.rr.mapper.BlogMapper;
 import com.rr.service.IBlogService;
 import com.rr.service.IFollowService;
 import com.rr.service.IUserService;
-import com.rr.utils.constants.SystemConstants;
 import com.rr.utils.UserHolder;
+import com.rr.utils.constants.SystemConstants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -194,9 +195,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     int os = 1; // 2
     for (ZSetOperations.TypedTuple<String> tuple : typedTuples) { // 5 4 4 2 2
       // 4.1.获取id
-      ids.add(Long.valueOf(tuple.getValue()));
+      ids.add(Long.valueOf(Objects.requireNonNull(tuple.getValue())));
       // 4.2.获取分数(时间戳）
-      long time = tuple.getScore().longValue();
+      long time = Objects.requireNonNull(tuple.getScore()).longValue();
       if (time == minTime) {
         os++;
       } else {
