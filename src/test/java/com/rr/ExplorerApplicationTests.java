@@ -3,6 +3,8 @@ package com.rr;
 import static com.rr.utils.constants.RedisConstants.SHOP_GEO_KEY;
 
 import com.rr.entity.Shop;
+import com.rr.entity.Voucher;
+import com.rr.service.IVoucherService;
 import com.rr.service.impl.ShopServiceImpl;
 import com.rr.utils.DistributeIdWorker;
 import java.util.ArrayList;
@@ -127,4 +129,14 @@ class ExplorerApplicationTests {
     String s = stringRedisTemplate.opsForValue().get("seckill:stock:15");
     System.out.println("aaa"+s);
   }
+
+  @Resource
+  IVoucherService voucherService  ;
+  @Test
+  void addSeckill(){
+    Voucher voucher = new Voucher();
+    voucherService.addSeckillVoucher(voucher);
+
+  }
+
 }

@@ -44,7 +44,8 @@ public class VoucherOrderServiceImpl extends
   /**
   ThreadPool
    */
-  private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
+  private static final ExecutorService SECKILL_ORDER_EXECUTOR =
+      Executors.newSingleThreadExecutor();
 
   private enum OrderStatus {
     SUCCESS(0),
@@ -74,11 +75,13 @@ public class VoucherOrderServiceImpl extends
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
+  /**
+   * 这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
+   * 而如果我们没有创建队列的话,就会一直抛异常。
+   * 先在redis里面创建MQ 再启动Java,创建MQ的命令: XGROUP CREATE stream.orders g1 0 MKSTREAM
+   */
   @PostConstruct//借助Spring.在当前类初始化完毕立即执行下列函数,AOP的一个应用
   private void init() {
-    //   这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
-    //   而如果我们没有创建队列的话,就会一直抛异常。
-    //   先在redis里面创建MQ 再启动Java,创建MQ的命令: XGROUP CREATE stream.orders g1 0 MKSTREAM
     SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
   }
 
@@ -90,10 +93,10 @@ public class VoucherOrderServiceImpl extends
 
     Long result = execSeckill(voucherId, userId, orderId);
 
-    return ret(orderId, result);
+    return decideRet(orderId, result);
   }
 
-  private static Result ret(long orderId, Long result) {
+  private static Result decideRet(long orderId, Long result) {
     if (result == null) {
       return Result.fail("query failed");
     }
@@ -185,7 +188,7 @@ public class VoucherOrderServiceImpl extends
       List<MapRecord<String, Object, Object>> list = streamDequeue();      //count maybe many,so return List ;here only 1
       if (list == null || list.isEmpty()) {
         // 如果为null，说明没有消息，继续下一次循环
-        //            Thread.sleep(100);  ->debug use
+        //            Thread.sleep(100);   // ->debug use
         return true;
       }
       MapRecord<String, Object, Object> record = list.get(0);

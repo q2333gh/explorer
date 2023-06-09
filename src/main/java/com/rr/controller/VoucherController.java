@@ -32,7 +32,7 @@ public class VoucherController {
    * @param voucher 优惠券信息，包含秒杀信息
    * @return 优惠券id
    */
-  @PostMapping("seckill")
+  @PostMapping("add_seckill")
   public Result addSeckillVoucher(@RequestBody Voucher voucher) {
     voucherService.addSeckillVoucher(voucher);
     return Result.ok(voucher.getId());
@@ -44,7 +44,7 @@ public class VoucherController {
    * @param voucher 优惠券信息
    * @return 优惠券id
    */
-  @PostMapping
+  @PostMapping("add_normal")
   public Result addVoucher(@RequestBody Voucher voucher) {
     voucherService.save(voucher);
     return Result.ok(voucher.getId());
@@ -61,4 +61,5 @@ public class VoucherController {
   public Result queryVoucherOfShop(@PathVariable("shopId") Long shopId) {
     return voucherService.queryVoucherOfShop(shopId);
   }
+
 }

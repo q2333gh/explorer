@@ -1,8 +1,10 @@
 package com.rr;
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RandomUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rr.dto.LoginFormDTO;
 import com.rr.dto.Result;
@@ -18,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
@@ -48,17 +49,19 @@ class VoucherOrderControllerTest {
     @Resource
     private ObjectMapper mapper;
 
-    public static int USER_NUMBER=100;//添加用户量
+    private static final int USER_NUMBER=1;//添加用户量
+//    private static final int USER_NUMBER=100;//添加用户量
+
 
 
 
     @Test
     @SneakyThrows
-    @DisplayName("创建1000个用户到数据库")
-    void createUser() {
+    @DisplayName("创建用户到数据库")
+    void createUser2DB() {
         List<String> phoneList = new ArrayList<>();
         for (int i = 0; i < USER_NUMBER; i++) {
-            String phone = String.format("131%s", RandomUtil.randomInt(10000000, 99999999));
+            String phone = String.format("158%s", RandomUtil.randomInt(10000000, 99999999));
             phoneList.add(phone);
         }
         ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());
@@ -81,13 +84,13 @@ class VoucherOrderControllerTest {
 
     @Test
     @SneakyThrows
-    @DisplayName("登录1000个用户，并输出到文件中")
-    void login() {
+    @DisplayName("登录用户，并输出到文件中")
+    void loginAndGenTokensFile() {
 
         List<String> phoneList = userService.lambdaQuery()
-                .select(User::getPhone)
-                .last("limit "+USER_NUMBER)
-                .list().stream().map(User::getPhone).collect(Collectors.toList());
+            .select(User::getPhone)
+            .last("limit " + USER_NUMBER)
+            .list().stream().map(User::getPhone).toList();
         ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());
         List<String> tokenList = new CopyOnWriteArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(phoneList.size());
@@ -105,8 +108,9 @@ class VoucherOrderControllerTest {
         countDownLatch.await();
         executorService.shutdown();
         Assert.isTrue(tokenList.size() == phoneList.size());
-        writeToTxt(tokenList, "/tokens.txt");
-        System.out.println("写入完成！");
+        String fileName="tokens"+ DateTime.now()+".txt";
+        writeToTxt(tokenList, "./"+fileName);
+        System.out.println("文件保存至: "+System.getProperty("user.dir")+fileName);
     }
 
     /**
@@ -115,31 +119,46 @@ class VoucherOrderControllerTest {
      * @return token
      */
     private  String codeAndLogin(String phone) throws Exception {
-        // 验证码
+        String code = getCode(phone);
+        return logingAndRetToken(phone, code);
+    }
+    private String getCode(String phone) throws Exception {
         String codeJson = mockMvc.perform(MockMvcRequestBuilders
                 .post("/user/code")
                 .queryParam("phone", phone))
-//                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        Result result = mapper.readerFor(Result.class).readValue(codeJson);
-//        Assert.isTrue(result.getSuccess(), String.format("获取“%s”手机号的验证码失败", phone));
-        String code = result.getData().toString();
-        LoginFormDTO formDTO = new LoginFormDTO();
-        formDTO.setCode(code);
-        formDTO.setPhone(phone);
-        String json = mapper.writeValueAsString(formDTO);
-        // token
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        Result result = JSON2Result(codeJson);
+        Assert.isTrue(result.getSuccess(), String.format("获取“%s”手机号的验证码失败", phone));
+        return result.getData().toString();
+    }
+
+    private String logingAndRetToken(String phone, String code) throws Exception {
+        String json = genLoginJSON(phone, code);
         String tokenJson = mockMvc.perform(MockMvcRequestBuilders
                 .post("/user/login")
                 .content(json)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        result = mapper.readerFor(Result.class).readValue(tokenJson);
-        Assert.isTrue(result.getSuccess(), String.format("获取“%s”手机号的token失败,json为“%s”", phone, json));
-        String token = result.getData().toString();
-        return token;
+        Result result = JSON2Result(tokenJson);
+        Assert.isTrue(result.getSuccess(), String.format("获取“%s”手机号的token失败,json为“%s”",
+            phone, json));
+        return result.getData().toString();
     }
+
+    private Result JSON2Result(String tokenJson) throws JsonProcessingException {
+        return mapper.readerFor(Result.class).readValue(tokenJson);
+    }
+
+    private String genLoginJSON(String phone, String code) throws JsonProcessingException {
+        LoginFormDTO formDTO = new LoginFormDTO();
+        formDTO.setCode(code);
+        formDTO.setPhone(phone);
+        String json = mapper.writeValueAsString(formDTO);
+        return json;
+    }
+
 
     //生成token文件
     private static void writeToTxt(List<String> list, String suffixPath) throws Exception {

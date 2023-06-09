@@ -25,17 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
   @Resource
   private IUserService userService;
-
   @Resource
   private IUserInfoService userInfoService;
 
   /**
    * 发送手机验证码
    */
-  @PostMapping("code")
+  @PostMapping("/code") // Spring will automatically add a slash to the value if it is missing
   public Result sendCode(@RequestParam("phone") String phone) {
     return userService.sendCode(phone);
   }
@@ -47,7 +45,6 @@ public class UserController {
    */
   @PostMapping("/login")
   public Result login(@RequestBody LoginFormDTO loginForm) {
-    // 实现登录功能
     return userService.login(loginForm);
   }
 
@@ -58,8 +55,8 @@ public class UserController {
    */
   @PostMapping("/logout")
   public Result logout() {
-    // TODO 实现登出功能
-    return Result.fail("功能未完成");
+    UserHolder.removeUser();
+    return Result.ok("log out executed");
   }
 
   @GetMapping("/me")
@@ -95,6 +92,10 @@ public class UserController {
     return Result.ok(userDTO);
   }
 
+  /**
+   *
+   * @return
+   */
   @PostMapping("/sign")
   public Result sign() {
     return userService.sign();

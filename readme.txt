@@ -20,12 +20,3 @@ command explain:
   & : In your case, it means to run the command in the background and
     return the shell prompt immediately without waiting for the command to finish.
   nohup: used to tell a process to ignore any SIGHUP (hang up) signals that it receives.
-
-
-
-
-
-
-
-
-

@@ -57,7 +57,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // 5.发送验证码
     log.debug("发送短信验证码成功，验证码：{}", code);
 
-    return Result.ok(code);
+//    return Result.ok(); // prod
+    return Result.ok(code);// debug
   }
 
   @Override
