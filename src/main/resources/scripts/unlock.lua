@@ -6,7 +6,7 @@
 --  1.可以自定义参数
 --  2.可以自定义参数量
 if (redis.call('get', KEYS[1]) == ARGV[1]) then
-    -- 释放锁 del key
-    return redis.call('del', KEYS[1])
+  -- 释放锁 del key
+  return redis.call('del', KEYS[1])
 end
 return 0

@@ -22,6 +22,10 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
     this.stringRedisTemplate = stringRedisTemplate;
   }
 
+  private static UserDTO map2bean(Map<Object, Object> userMap) {
+    return BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
+  }
+
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
       throws Exception {
@@ -47,10 +51,6 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 
   private Map<Object, Object> redisGetMap(String key) {
     return stringRedisTemplate.opsForHash().entries(key);
-  }
-
-  private static UserDTO map2bean(Map<Object, Object> userMap) {
-    return BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
   }
 
   @Override

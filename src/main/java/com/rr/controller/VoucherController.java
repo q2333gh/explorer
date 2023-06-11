@@ -35,7 +35,7 @@ public class VoucherController {
   @PostMapping("add_seckill")
   public Result addSeckillVoucher(@RequestBody Voucher voucher) {
     voucherService.addSeckillVoucher(voucher);
-    return Result.ok(voucher.getId());
+    return Result.ok("vid:" + voucher.getId());
   }
 
   /**

@@ -25,30 +25,29 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @SpringBootTest
 class ExplorerApplicationTests {
 
-//  @Resource
-//  private CacheClient cacheClient;
+  //  @Resource
+  //  private CacheClient cacheClient;
 
+  //  @Resource
+  private final ExecutorService threads = Executors.newFixedThreadPool(1000);
+  @Resource
+  IVoucherService voucherService;
   @Resource
   private ShopServiceImpl shopService;
-
   @Resource
   private DistributeIdWorker distributeIdWorker;
-
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
-//  @Resource
-  private final ExecutorService threads = Executors.newFixedThreadPool(1000);
-
   @Test
   void testIdWorkerPerf() throws InterruptedException {
-    AtomicLong idsCount= new AtomicLong(0L);//thread-safe number
-    int tasks=500;
+    AtomicLong idsCount = new AtomicLong(0L);//thread-safe number
+    int tasks = 500;
     CountDownLatch latch = new CountDownLatch(tasks);//timer inside each thread.
     Runnable task = () -> {//asycronized
       for (int i = 0; i < 100; i++) {
         long id = distributeIdWorker.nextId("test");
-//        System.out.println("id = " + id);
+        //        System.out.println("id = " + id);
         idsCount.getAndIncrement();
       }
       latch.countDown();
@@ -59,18 +58,18 @@ class ExplorerApplicationTests {
     }
     latch.await();
     long end = System.currentTimeMillis();
-    long delta=(end - begin);
+    long delta = (end - begin);
 
-    System.out.println("time = " + delta+"ms");
-    System.out.println("idsCount = "+idsCount);
-    double v=idsCount.doubleValue()/((double) delta/1000);
-    System.out.println("generating speed : "+v+" id/s");
+    System.out.println("time = " + delta + "ms");
+    System.out.println("idsCount = " + idsCount);
+    double v = idsCount.doubleValue() / ((double) delta / 1000);
+    System.out.println("generating speed : " + v + " id/s");
   }
 
   @Test
   void testSaveShop() throws InterruptedException {
     Shop shop = shopService.getById(1L);
-//    cacheClient.setWithLogicalExpire(CACHE_SHOP_KEY + 1L, shop, 10L, TimeUnit.SECONDS);
+    //    cacheClient.setWithLogicalExpire(CACHE_SHOP_KEY + 1L, shop, 10L, TimeUnit.SECONDS);
   }
 
   @Test
@@ -125,15 +124,13 @@ class ExplorerApplicationTests {
   }
 
   @Test
-  void testSecKill(){
+  void testSecKill() {
     String s = stringRedisTemplate.opsForValue().get("seckill:stock:15");
-    System.out.println("aaa"+s);
+    System.out.println("aaa" + s);
   }
 
-  @Resource
-  IVoucherService voucherService  ;
   @Test
-  void addSeckill(){
+  void addSeckill() {
     Voucher voucher = new Voucher();
     voucherService.addSeckillVoucher(voucher);
 

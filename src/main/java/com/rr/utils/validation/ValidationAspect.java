@@ -11,8 +11,10 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 public class ValidationAspect {
+
   @Around("@annotation(ParamValidate)")
-  public Object MethodsValidation(ProceedingJoinPoint joinPoint, ParamValidate ParamValidate) throws Throwable {
+  public Object MethodsValidation(ProceedingJoinPoint joinPoint, ParamValidate ParamValidate)
+      throws Throwable {
     // Get method arguments
     Object[] args = joinPoint.getArgs();
     String phoneParamName = ParamValidate.phoneParamName();

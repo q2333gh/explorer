@@ -39,9 +39,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
+  private static Map<String, Object> trans2Map(User user) {
+    UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+    return BeanUtil.beanToMap(userDTO, new HashMap<>(),
+        CopyOptions.create()
+            .setIgnoreNullValue(true)
+            .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
+  }
 
   @Override
-//  @ParamValidate(phoneParamName = "phone")
+  //  @ParamValidate(phoneParamName = "phone")
   public Result sendCode(String phone) {
     // 1.校验手机号
     if (RegexUtils.isPhoneInvalid(phone)) {
@@ -57,12 +64,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // 5.发送验证码
     log.debug("发送短信验证码成功，验证码：{}", code);
 
-//    return Result.ok(); // prod
+    //    return Result.ok(); // prod
     return Result.ok(code);// debug
   }
 
   @Override
-   public Result login(LoginFormDTO loginForm) {
+  public Result login(LoginFormDTO loginForm) {
     String phone = loginForm.getPhone();
     if (RegexUtils.isPhoneInvalid(phone)) {
       return Result.fail("手机号格式错误！");
@@ -87,14 +94,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     // 7.4.设置token有效期
     stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.SECONDS);
     return Result.ok(token);
-  }
-
-  private static Map<String, Object> trans2Map(User user) {
-    UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-    return BeanUtil.beanToMap(userDTO, new HashMap<>(),
-        CopyOptions.create()
-            .setIgnoreNullValue(true)
-            .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
   }
 
   @Override

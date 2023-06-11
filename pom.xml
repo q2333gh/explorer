@@ -2,7 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <artifactId>hm-dianping</artifactId>
+  <artifactId>exloprer</artifactId>
   <build>
     <plugins>
       <plugin>
@@ -80,6 +80,13 @@
       <groupId>cn.hutool</groupId>
       <version>5.7.17</version>
     </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <version>3.4.14</version>
+    </dependency>
+
+
     <!--redisson-->
     <dependency>
       <artifactId>redisson</artifactId>
@@ -95,7 +102,7 @@
   <description>Demo project for Spring Boot</description>
   <groupId>com.hmdp</groupId>
   <modelVersion>4.0.0</modelVersion>
-  <name>hm-dianping</name>
+  <name>explorer</name>
   <parent>
     <artifactId>spring-boot-starter-parent</artifactId>
     <groupId>org.springframework.boot</groupId>

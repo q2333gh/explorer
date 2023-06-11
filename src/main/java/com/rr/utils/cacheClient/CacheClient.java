@@ -29,7 +29,17 @@ public class CacheClient {
     this.stringRedisTemplate = stringRedisTemplate;
   }
 
+  private static <R> R deserialize(Class<R> type, RedisData redisData) {
+    return JSONUtil.toBean((JSONObject) redisData.getData(), type);
+  }
 
+  private static RedisData deserialize(String json) {
+    return JSONUtil.toBean(json, RedisData.class);
+  }
+
+  private static <R> R getBean(Class<R> type, String shopJson) {
+    return JSONUtil.toBean(shopJson, type);
+  }
 
   public <R, ID> R queryWithPassThrough(
       String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback,
@@ -60,11 +70,9 @@ public class CacheClient {
     return r;
   }
 
-
-
   /**
-   * use mutex to  make parallelization  to serialization,
-   * also built in with passThrough protection.(set null obj)
+   * use mutex to  make parallelization  to serialization, also built in with passThrough
+   * protection.(set null obj)
    */
   public <R, ID> R queryWithMutex(
       String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long duration,
@@ -83,7 +91,7 @@ public class CacheClient {
     // 4.实现缓存重建
     // 4.1.获取互斥锁
     String lockKey = LOCK_SHOP_KEY + id;
-    R r ;
+    R r;
     try {
       boolean isLock = tryLock(lockKey);
       // 4.2.判断是否获取成功
@@ -95,7 +103,8 @@ public class CacheClient {
       }
       // 4.4.获取锁成功，根据id查询数据库
       r = dbFallback.apply(id);
-      Thread.sleep(200);//simulate remote call DB via network.time longer ,need higher reliable of mutex
+      Thread.sleep(
+          200);//simulate remote call DB via network.time longer ,need higher reliable of mutex
       // 5.不存在，返回错误
       if (r == null) {
         // 将空值写入redis
@@ -161,15 +170,6 @@ public class CacheClient {
     return r;
   }
 
-  private static <R> R deserialize(Class<R> type, RedisData redisData) {
-    return JSONUtil.toBean((JSONObject) redisData.getData(), type);
-  }
-
-  private static RedisData deserialize(String json) {
-    return JSONUtil.toBean(json, RedisData.class);
-  }
-
-
   /**
    * Redis get
    */
@@ -177,15 +177,11 @@ public class CacheClient {
     return stringRedisTemplate.opsForValue().get(key);
   }
 
-
-  private static <R> R getBean(Class<R> type, String shopJson) {
-    return JSONUtil.toBean(shopJson, type);
-  }
-
   /**
    * thread-safe mutex .
+   *
    * @param key key
-   * @return  get lock or not
+   * @return get lock or not
    */
   private boolean tryLock(String key) {
     //Redis-command: setnx k v  (if key not exist)
@@ -194,7 +190,7 @@ public class CacheClient {
 
   private Boolean setnx(String key) {
     return BooleanUtil.isTrue(stringRedisTemplate.opsForValue().
-        setIfAbsent(key, "1", 10, TimeUnit.SECONDS)) ;
+        setIfAbsent(key, "1", 10, TimeUnit.SECONDS));
   }
 
   private void unlock(String key) {

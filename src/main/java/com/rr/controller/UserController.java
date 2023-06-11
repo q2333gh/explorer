@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/user")
 public class UserController {
+
   @Resource
   private IUserService userService;
   @Resource
@@ -93,7 +94,6 @@ public class UserController {
   }
 
   /**
-   *
    * @return
    */
   @PostMapping("/sign")

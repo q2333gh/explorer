@@ -1,6 +1,7 @@
 package com.rr.service.impl;
 
 //import static com.rr.service.impl.VoucherOrderServiceImpl.GetBean;
+
 import static com.rr.utils.constants.RedisConstants.STREAM_ORDERS;
 import static java.lang.Thread.sleep;
 
@@ -16,6 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Slf4j
 public class VoucherOrderHandler implements Runnable {
+
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
@@ -53,7 +55,7 @@ public class VoucherOrderHandler implements Runnable {
       //            continue;
     }
     MapRecord<String, Object, Object> record = list.get(0);
-//    createVoucherOrder(GetBean(record.getValue())); //TODO
+    //    createVoucherOrder(GetBean(record.getValue())); //TODO
     ack(record);
     return false;
   }

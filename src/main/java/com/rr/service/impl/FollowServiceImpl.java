@@ -67,7 +67,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     // 1.获取登录用户
     Long userId = UserHolder.getUser().getId();
     // 2.查询是否关注 select count(*) from tb_follow where user_id = ? and follow_user_id = ?
-    Integer count = query().eq("user_id", userId).eq("follow_user_id", followUserId).count();
+    int count = Math.toIntExact(
+        query().eq("user_id", userId).eq("follow_user_id", followUserId).count());
     // 3.判断
     return Result.ok(count > 0);
   }

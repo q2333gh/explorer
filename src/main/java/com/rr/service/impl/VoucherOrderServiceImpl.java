@@ -34,31 +34,28 @@ import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 public class VoucherOrderServiceImpl extends
     ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
+
   private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
   /**
-  ThreadPool
+   * newSingleThreadExecutor Concepts:
+   * <p>1.setting the keep-alive time to 0 in a ThreadPoolExecutor will not
+   * cause the thread to rapidly   restart. If the keep-alive time is set to 0, it means that idle
+   * threads will not be terminated due to inactivity. for ex: KAT=30s -> 30s  idle thread
+   * terminated ; 0 -> not terminate</p>
+   * <p>2.performance view : terminate or restart is fully equal to one static thread.
+   * but : ExecutorService provide additional benefits: modularity , maintainability, and easy to
+   * use.</p>
+   * <p>3.design pattern: factory mode : provides an interface for creating objects,
+   * but allows subclasses to alter the type of objects</p>
    */
   private static final ExecutorService SECKILL_ORDER_EXECUTOR =
       Executors.newSingleThreadExecutor();
 
-  private enum OrderStatus {
-    SUCCESS(0),
-    INSUFFICIENT_INVENTORY(1),
-    DUPLICATE_ORDER(2);
-    private final int code;
-    OrderStatus(int code) {
-      this.code = code;
-    }
-    public int getCode() {
-      return code;
-    }
-  }
 
   static {
     SECKILL_SCRIPT = new DefaultRedisScript<>();
@@ -75,27 +72,6 @@ public class VoucherOrderServiceImpl extends
   @Resource
   private StringRedisTemplate stringRedisTemplate;
 
-  /**
-   * 这个类是常驻消费者线程，持续监听 Redis Stream 消息队列，
-   * 而如果我们没有创建队列的话,就会一直抛异常。
-   * 先在redis里面创建MQ 再启动Java,创建MQ的命令: XGROUP CREATE stream.orders g1 0 MKSTREAM
-   */
-  @PostConstruct//借助Spring.在当前类初始化完毕立即执行下列函数,AOP的一个应用
-  private void init() {
-    SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
-  }
-
-  @Override
-  public Result seckillVoucher(Long voucherId) {
-    if (!Exist(voucherId)) { return Result.fail("voucher not exist!"); }
-    Long userId = UserHolder.getUser().getId();
-    long orderId = distributeIdWorker.nextId("order");
-
-    Long result = execSeckill(voucherId, userId, orderId);
-
-    return decideRet(orderId, result);
-  }
-
   private static Result decideRet(long orderId, Long result) {
     if (result == null) {
       return Result.fail("query failed");
@@ -105,7 +81,49 @@ public class VoucherOrderServiceImpl extends
       return Result.fail(res == Insufficient() ?
           "inventory insufficient" : "not allow duplicate order");
     }
-    return Result.ok(orderId);
+    return Result.ok("orderId: " + orderId);
+  }
+
+  private static String insufficient() {
+    return "库存不足！";
+  }
+
+  private static String notAllowDuplicate() {
+    return "不允许重复下单！";
+  }
+
+  private static VoucherOrder GetBean(Map<Object, Object> value) {
+    return BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
+  }
+
+  private static int Insufficient() {
+    return OrderStatus.INSUFFICIENT_INVENTORY.getCode();
+  }
+
+  private static int Success() {
+    return OrderStatus.SUCCESS.getCode();
+  }
+
+  /**
+   * 这个类是常驻消费者线程，持续监听 Redis Stream 消息队列， 而如果我们没有创建队列的话,就会一直抛异常。 先在redis里面创建MQ 再启动Java,创建MQ的命令:
+   * XGROUP CREATE stream.orders g1 0 MKSTREAM
+   */
+  @PostConstruct//借助Spring.在当前类初始化完毕立即执行下列函数,AOP的一个应用
+  private void init() {
+    SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
+  }
+
+  @Override
+  public Result seckillVoucher(Long voucherId) {
+    if (!Exist(voucherId)) {
+      return Result.fail("voucher not exist!");
+    }
+    Long userId = UserHolder.getUser().getId();
+    long orderId = distributeIdWorker.nextId("order");
+
+    Long result = execSeckill(voucherId, userId, orderId);
+
+    return decideRet(orderId, result);
   }
 
   private Long execSeckill(Long voucherId, Long userId, long orderId) {
@@ -131,26 +149,18 @@ public class VoucherOrderServiceImpl extends
         log.error(notAllowDuplicate());
         return;
       }
-      boolean success = submit(voucherId);
+      boolean success = stock_minus_1(voucherId);
       if (!success) {
         log.error(insufficient());
         return;
       }
-      save(voucherOrder);
+      save(voucherOrder);//DB SQL
     } finally {
       redisLock.unlock();
     }
   }
 
-  private static String insufficient() {
-    return "库存不足！";
-  }
-
-  private static String notAllowDuplicate() {
-    return "不允许重复下单！";
-  }
-
-  private boolean submit(Long voucherId) {
+  private boolean stock_minus_1(Long voucherId) {
     return seckillVoucherService.update()
         .setSql("stock = stock - 1")
         .eq("voucher_id", voucherId).gt("stock", 0)
@@ -158,89 +168,7 @@ public class VoucherOrderServiceImpl extends
   }
 
   private Integer isDuplicated(Long userId, Long voucherId) {
-    return query().eq("user_id", userId).eq("voucher_id", voucherId).count();
-  }
-
-  private class VoucherOrderHandler implements Runnable {
-    @Override
-    public void run() {
-      while (true) {
-        try {
-          if (tryOrder()) {
-            break;
-          }
-        } catch (Exception e) {
-          log.error("处理订单异常", e);
-          try {
-            handlePendingList();
-          } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-          }
-        }
-      }
-    }
-
-    /**
-     * @return true->consume 1  false->empty
-     */
-    @Transactional
-    private boolean tryOrder() {
-      List<MapRecord<String, Object, Object>> list = streamDequeue();      //count maybe many,so return List ;here only 1
-      if (list == null || list.isEmpty()) {
-        // 如果为null，说明没有消息，继续下一次循环
-        //            Thread.sleep(100);   // ->debug use
-        return true;
-      }
-      MapRecord<String, Object, Object> record = list.get(0);
-      createVoucherOrder(GetBean(record.getValue()));
-      streamAck(record);
-      return false;
-    }
-
-    /**
-     * 获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
-     */
-    @SuppressWarnings("unchecked")
-    private List<MapRecord<String, Object, Object>> streamDequeue() {
-      return stringRedisTemplate.opsForStream().read(
-          Consumer.from("g1", "c1"),
-          StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
-          StreamOffset.create(STREAM_ORDERS, ReadOffset.from("0"))
-      );
-    }
-
-    private void streamAck(MapRecord<String, Object, Object> record) {
-      stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
-    }
-
-    /**
-     * 处理取了没消费的未确认订单,确保拿走的订单都要消费
-     */
-    @SuppressWarnings("all")
-    private void handlePendingList() throws InterruptedException {
-      while (true) {
-        try {
-          if (tryOrder()) {
-            break;
-          }
-        } catch (Exception e) {
-          log.error("处理订单异常", e);
-          sleep(20);
-          //无需递归调用自己了,会回到取主消息队列的位置
-        }
-      }
-    }
-  }
-
-  private static VoucherOrder GetBean(Map<Object, Object> value) {
-    return BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
-  }
-  private static int Insufficient() {
-    return OrderStatus.INSUFFICIENT_INVENTORY.getCode();
-  }
-
-  private static int Success() {
-    return OrderStatus.SUCCESS.getCode();
+    return Math.toIntExact(query().eq("user_id", userId).eq("voucher_id", voucherId).count());
   }
 
   private boolean Exist(Long voucherId) {
@@ -248,4 +176,124 @@ public class VoucherOrderServiceImpl extends
     return s != null;
   }
 
+  private enum OrderStatus {
+    SUCCESS(0),
+    INSUFFICIENT_INVENTORY(1),
+    DUPLICATE_ORDER(2);
+    private final int code;
+
+    OrderStatus(int code) {
+      this.code = code;
+    }
+
+    public int getCode() {
+      return code;
+    }
+  }
+
+  private class VoucherOrderHandler implements Runnable {
+
+    boolean running = true;
+
+    @Override
+    public void run() {
+      while (running) {//stream 内部设置了2秒阻塞等待.不会高cpu空转
+        try {
+          tryConsumeMainStream();
+        } catch (Exception e) {
+          log.error("处理订单异常", e);
+          try {
+            handlePendingList();
+          } catch (InterruptedException ex) {
+            running = false;// handlePendingList() impl got a try catch. won`t run to here.
+            //code semantics aim to  always keep reading the stream. means an infi-loop.
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * 处理取了没消费的未确认订单,确保拿走的订单都要消费
+   */
+  @SuppressWarnings("all")
+  private void handlePendingList() throws InterruptedException {
+    while (true) {
+      try {
+        if (consumePendingList()) {
+          break;
+        }
+      } catch (Exception e) {
+        log.error("处理订单异常", e);
+        sleep(20);  //无需递归调用自己了,会回到取主消息队列的位置
+      }
+    }
+  }
+
+
+  private void tryConsumeMainStream() {
+    List<MapRecord<String, Object, Object>> list = streamDequeue();      //count maybe many,so return List ;here only 1
+    if (list == null || list.isEmpty()) {
+      return;        // 如果为null，说明没有消息，继续下一次循环
+    }
+    MapRecord<String, Object, Object> record = list.get(0);
+    createVoucherOrder(GetBean(record.getValue()));
+    streamAck(record);
+  }
+
+
+  private boolean consumePendingList() {
+    List<MapRecord<String, Object, Object>> list = pendingListDequeue();      //count maybe many,so return List ;here only 1
+    if (list == null || list.isEmpty()) {
+      return true;      // 如果为null，说明没有消息，结束读取pendingList.回到主stream 循环
+    }
+    MapRecord<String, Object, Object> record = list.get(0);
+    createVoucherOrder(GetBean(record.getValue()));
+    streamAck(record);
+    return false;
+  }
+
+  /**
+   * 获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
+   */
+  @SuppressWarnings("unchecked")
+  private List<MapRecord<String, Object, Object>> streamDequeue() {
+    return stringRedisTemplate.opsForStream().read(
+        Consumer.from("g1", "c1"),
+        StreamReadOptions
+            .empty()
+            .count(1)
+            .block(Duration.ofSeconds(2)),
+        StreamOffset.create(
+            STREAM_ORDERS, ReadOffset.latest()
+        )
+        //        .block(Duration.ofSeconds(2)) explain ->
+        //        2 case:
+        //          queue empty -> java thread block 2s. and try next time (outside infi-loop)
+        //              java internal timer signal.
+        //          queue have element(s) ->  dequeue now. and keep next dequeue.
+        //              will not block 2s. but unblock until the redis-remote signal.
+    );
+  }
+
+  /**
+   * PendingList中的消息
+   * XREADGROUP GROUP g1 c1 COUNT 1  STREAMS stream.orders 0
+   */
+  @SuppressWarnings("unchecked")
+  private List<MapRecord<String, Object, Object>> pendingListDequeue() {
+    return stringRedisTemplate.opsForStream().read(
+        Consumer.from("g1", "c1"),
+        StreamReadOptions.empty().count(1),
+        StreamOffset.create(STREAM_ORDERS, ReadOffset.latest())
+    );
+  }
+
+  private void streamAck(MapRecord<String, Object, Object> record) {
+    stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
+  }
+
+
 }
+
+

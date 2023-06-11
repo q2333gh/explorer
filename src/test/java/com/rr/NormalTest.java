@@ -43,7 +43,7 @@ public class NormalTest {
   }
 
   @Test
-  void testInvoke(){
+  void testInvoke() {
     User user = new User();
 
   }
