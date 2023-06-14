@@ -22,6 +22,8 @@ public class RedisConstants {
   public static final String USER_SIGN_KEY = "sign:";
   public static final String LOCK_ORDER = "lock:order:";
   public static final String STREAM_ORDERS = "stream.orders";
+  public static final String CONSUMER_GROUP = "g1";
+  public static final String CONSUMER_NAME = "c1";
 
 
 }

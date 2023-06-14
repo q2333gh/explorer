@@ -31,15 +31,14 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 /**
- * 使用前提： 1.有Hutool工具类的依赖 2.登陆功能会返回验证码，用户不存在会自动注册，且用phone字段来进行登陆。
+ * function describe: 创建用户到数据库,且登录,保存tokens到文件
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 class VoucherOrderControllerTest {
 
-  private static final int USER_NUMBER = 1000;//添加用户量
-  //    private static final int USER_NUMBER=100;//添加用户量
-  private static final String PHONE_3digits = "155%s";//添加用户量
+  private static  int USER_NUMBER ;//添加用户量
+  private static final String PHONE_3digits = "155%s";
   @Resource
   private MockMvc mockMvc;
   @Resource
@@ -51,6 +50,7 @@ class VoucherOrderControllerTest {
   @SneakyThrows
   @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
   void createUser2DB() {
+    USER_NUMBER=1000;
     List<String> phoneList = genUsersPhones();
     concurrentCreateUser(phoneList);
   }
@@ -61,33 +61,6 @@ class VoucherOrderControllerTest {
         .replace("-", "_")
         .replace(":", "_");
   }
-
-  //    @Test
-  //    @SneakyThrows
-  //    @DisplayName("登录用户，并输出到文件中")
-  //    void loginAndGenTokensFile() {
-  //        List<String> phoneList = callDB2getPhones();
-  //        ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());
-  //        List<String> tokenList = new CopyOnWriteArrayList<>();
-  //        CountDownLatch countDownLatch = new CountDownLatch(phoneList.size());
-  //        phoneList.forEach(phone -> {
-  //            executorService.execute(() -> {
-  //                try {
-  //                    String token = codeAndLogin(phone);
-  //                    tokenList.add(token);
-  //                    countDownLatch.countDown();
-  //                } catch (Exception e) {
-  //                    e.printStackTrace();
-  //                }
-  //            });
-  //        });
-  //        countDownLatch.await();
-  //        executorService.shutdown();
-  //        Assert.isTrue(tokenList.size() == phoneList.size());
-  //        String fileName="tokens"+ DateTime.now()+".txt";
-  //        writeToTxt(tokenList, "./"+fileName);
-  //        System.out.println("文件保存至: "+System.getProperty("user.dir")+fileName);
-  //    }
 
   private static List<String> genUsersPhones() {
     List<String> phoneList = new ArrayList<>();
@@ -112,7 +85,11 @@ class VoucherOrderControllerTest {
     //        如果src前面有个/  ->  绝对路径 , in windows : current drive of the Java process: C:/src...
     //        没有/  或者是./ 则是相对路径
     if (!dir.exists()) {
-      dir.mkdirs();
+      boolean mkdirs = dir.mkdirs();
+      if (!mkdirs){
+        System.out.println("mkdir error!");
+        return;
+      }
     }
     File file = new File(dir, fileName);
     FileWriter fileWriter = new FileWriter(file);
@@ -137,18 +114,16 @@ class VoucherOrderControllerTest {
     ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());
     CountDownLatch countDownLatch = new CountDownLatch(phoneList.size());
     List<String> tokenList = new CopyOnWriteArrayList<>();
-    phoneList.forEach(phone -> {
-      executorService.execute(() -> {
-        try {
-          String token = codeAndLogin(phone);
-          tokenList.add(token);
-        } catch (Exception e) {
-          e.printStackTrace();
-        } finally {
-          countDownLatch.countDown();
-        }
-      });
-    });
+    phoneList.forEach(phone -> executorService.execute(() -> {
+      try {
+        String token = codeAndLogin(phone);
+        tokenList.add(token);
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        countDownLatch.countDown();
+      }
+    }));
     countDownLatch.await();
     executorService.shutdown();
     System.out.println("创建: " + phoneList.size() + " 个用户成功");
@@ -206,8 +181,7 @@ class VoucherOrderControllerTest {
     LoginFormDTO formDTO = new LoginFormDTO();
     formDTO.setCode(code);
     formDTO.setPhone(phone);
-    String json = mapper.writeValueAsString(formDTO);
-    return json;
+    return mapper.writeValueAsString(formDTO);
   }
 
 
