@@ -37,23 +37,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 @AutoConfigureMockMvc
 class VoucherOrderControllerTest {
 
-  private static  int USER_NUMBER ;//添加用户量
   private static final String PHONE_3digits = "155%s";
+  private static int USER_NUMBER;//添加用户量
   @Resource
   private MockMvc mockMvc;
   @Resource
   private IUserService userService;
   @Resource
   private ObjectMapper mapper;
-
-  @Test
-  @SneakyThrows
-  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
-  void createUser2DB() {
-    USER_NUMBER=1000;
-    List<String> phoneList = genUsersPhones();
-    concurrentCreateUser(phoneList);
-  }
 
   private static String nowTime() {
     return DateTime.now().toString()
@@ -76,7 +67,7 @@ class VoucherOrderControllerTest {
   }
 
   /**
-   *   生成token文件
+   * 生成token文件
    */
   private static void writeToTxt(List<String> list, String fileName) throws Exception {
     String curDir = System.getProperty("user.dir");
@@ -86,7 +77,7 @@ class VoucherOrderControllerTest {
     //        没有/  或者是./ 则是相对路径
     if (!dir.exists()) {
       boolean mkdirs = dir.mkdirs();
-      if (!mkdirs){
+      if (!mkdirs) {
         System.out.println("mkdir error!");
         return;
       }
@@ -98,17 +89,24 @@ class VoucherOrderControllerTest {
     for (String item : list) {
       sb.append(item).append(",").append("\n");
       //            在jmeter识别.txt文件或者.csv文件的时候,必须要 换行! 我晕!
-//       JMeter, it will be treated as a single line containing multiple tokens separated by commas.
+      //       JMeter, it will be treated as a single line containing multiple tokens separated by commas.
     }
     sb.deleteCharAt(sb.length() - 1);        // Remove the last comma
     bufferedWriter.write(sb.toString());
     bufferedWriter.close();
     fileWriter.close();
-//    System.out.println("写入完成！");
+    //    System.out.println("写入完成！");
     //        System.out.println("文件保存至: "+System.getProperty("user.dir")+fileName);
   }
 
-
+  @Test
+  @SneakyThrows
+  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
+  void createUser2DB() {
+    USER_NUMBER = 1000;
+    List<String> phoneList = genUsersPhones();
+    concurrentCreateUser(phoneList);
+  }
 
   private void concurrentCreateUser(List<String> phoneList) throws Exception {
     ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());

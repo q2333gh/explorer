@@ -26,7 +26,7 @@ public class UploadController {
       // 获取原始文件名称
       String originalFilename = image.getOriginalFilename();
       // 生成新文件名
-      String fileName = createNewFileName(originalFilename);
+      String fileName = newFile(originalFilename);
       // 保存文件
       image.transferTo(new File(SystemConstants.IMAGE_UPLOAD_DIR, fileName));
       // 返回结果
@@ -47,20 +47,25 @@ public class UploadController {
     return Result.ok();
   }
 
-  private String createNewFileName(String originalFilename) {
-    // 获取后缀
+  private String newFile(String originalFilename) {
     String suffix = StrUtil.subAfter(originalFilename, ".", true);
-    // 生成目录
-    String name = UUID.randomUUID().toString();
+    String name = randomUUID();
     int hash = name.hashCode();
     int d1 = hash & 0xF;
     int d2 = (hash >> 4) & 0xF;
-    // 判断目录是否存在
     File dir = new File(SystemConstants.IMAGE_UPLOAD_DIR, StrUtil.format("/blogs/{}/{}", d1, d2));
     if (!dir.exists()) {
-      dir.mkdirs();
+      try {
+        dir.mkdirs();
+      } catch (Exception e) {
+        log.error("mkdir error!",e);
+        throw new RuntimeException(e);
+      }
     }
-    // 生成文件名
     return StrUtil.format("/blogs/{}/{}/{}.{}", d1, d2, name, suffix);
+  }
+
+  private static String randomUUID() {
+    return UUID.randomUUID().toString();
   }
 }

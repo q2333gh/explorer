@@ -94,7 +94,7 @@ public class UserController {
   }
 
   /**
-   * @return
+   * 签到打卡
    */
   @PostMapping("/sign")
   public Result sign() {

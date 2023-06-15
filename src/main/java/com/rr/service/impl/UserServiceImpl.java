@@ -104,6 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     String key = USER_SIGN_KEY + userId + keySuffix;
     int dayOfMonth = now.getDayOfMonth();
     // 5.写入Redis SETBIT key offset 1
+    //    ex: 10011 -> 100111 SETBIT k1 6 1 第六位设置为1
     stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
     return Result.ok();
   }
@@ -134,6 +135,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
       return Result.ok(0);
     }
     // 6.循环遍历
+    int count = getCount(num);
+    return Result.ok(count);
+  }
+
+  private static int getCount(Long num) {
     int count = 0;
     while (true) {
       // 6.1.让这个数字与1做与运算，得到数字的最后一个bit位  // 判断这个bit位是否为0
@@ -147,7 +153,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
       // 把数字右移一位，抛弃最后一个bit位，继续下一个bit位
       num >>>= 1;
     }
-    return Result.ok(count);
+    return count;
   }
 
   private User createUserWithPhone(String phone) {
