@@ -97,9 +97,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
   @Override
   public Result likeBlog(Long id) {
-    // 1.获取登录用户
     Long userId = UserHolder.getUser().getId();
-    // 2.判断当前登录用户是否已经点赞
     String key = BLOG_LIKED_KEY + id;
     Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
     if (score == null) {
@@ -143,13 +141,13 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     List<Long> ids = top5.stream().map(Long::valueOf).collect(Collectors.toList());
     String idsStr = StrUtil.join(",", ids);
     // 3.根据用户id查询用户 WHERE id IN ( 5 , 1 ) ORDER BY FIELD(id, 5, 1)
-    List<UserDTO> userDTOS = userService.query()
+    List<UserDTO> userDTOs = userService.query()
         .in("id", ids).last("ORDER BY FIELD(id," + idsStr + ")").list()
         .stream()
         .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
         .collect(Collectors.toList());
     // 4.返回
-    return Result.ok(userDTOS);
+    return Result.ok(userDTOs);
   }
 
   @Override
@@ -185,7 +183,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     String key = FEED_KEY + userId;
     Set<ZSetOperations.TypedTuple<String>> typedTuples = stringRedisTemplate.opsForZSet()
         .reverseRangeByScoreWithScores(key, 0, max, offset, 2);
-    // 3.非空判断
+
     if (typedTuples == null || typedTuples.isEmpty()) {
       return Result.ok();
     }
@@ -229,7 +227,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
   private void queryBlogUser(Blog blog) {
     Long userId = blog.getUserId();
     User user = userService.getById(userId);
-    //manually set data
     blog.setName(user.getNickName());
     blog.setIcon(user.getIcon());
   }
