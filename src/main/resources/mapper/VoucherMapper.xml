@@ -4,7 +4,7 @@
 <mapper namespace="com.rr.mapper.VoucherMapper">
 
   <select id="queryVoucherOfShop" parameterType="java.lang.Long"
-    resultType="com.rr.entity.Voucher">
+    resultType="com.explorer.entity.Voucher">
     SELECT v.`id`,
            v.`shop_id`,
            v.`title`,
