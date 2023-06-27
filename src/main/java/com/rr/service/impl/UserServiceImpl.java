@@ -48,7 +48,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
   }
 
   @Override
-  //  @ParamValidate(phoneParamName = "phone")
   public Result sendCode(String phone) {
     // 1.校验手机号
     if (RegexUtils.isPhoneInvalid(phone)) {

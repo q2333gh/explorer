@@ -11,7 +11,7 @@ import com.rr.dto.Result;
 import com.rr.entity.Shop;
 import com.rr.mapper.ShopMapper;
 import com.rr.service.IShopService;
-import com.rr.utils.cacheClient.CacheClient;
+import com.rr.utils.redisClient.CacheClient;
 import com.rr.utils.constants.SystemConstants;
 import java.util.ArrayList;
 import java.util.Collections;

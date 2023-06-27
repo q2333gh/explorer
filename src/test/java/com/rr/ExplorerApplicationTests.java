@@ -6,7 +6,7 @@ import com.rr.entity.Shop;
 import com.rr.entity.Voucher;
 import com.rr.service.IVoucherService;
 import com.rr.service.impl.ShopServiceImpl;
-import com.rr.utils.DistributeIdWorker;
+import com.rr.utils.redisClient.DistributeIdWorker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

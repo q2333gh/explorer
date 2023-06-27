@@ -16,7 +16,7 @@ import com.rr.entity.VoucherOrder;
 import com.rr.mapper.VoucherOrderMapper;
 import com.rr.service.ISeckillVoucherService;
 import com.rr.service.IVoucherOrderService;
-import com.rr.utils.DistributeIdWorker;
+import com.rr.utils.redisClient.DistributeIdWorker;
 import com.rr.utils.UserHolder;
 import java.time.Duration;
 import java.util.Collections;
@@ -93,7 +93,7 @@ public class VoucherOrderServiceImpl extends
     return "库存不足！";
   }
 
-  private static String notAllowDuplicate() {
+  private static String banDup() {
     return "不允许重复下单！";
   }
 
@@ -145,13 +145,13 @@ public class VoucherOrderServiceImpl extends
     RLock redisLock = redissonClient.getLock(LOCK_ORDER + userId);
     boolean isLock = redisLock.tryLock();
     if (!isLock) {
-      log.error(notAllowDuplicate());
+      log.error(banDup());
       return;
     }
     try {
       int count = isDuplicated(userId, voucherId);
       if (count > 0) {
-        log.error(notAllowDuplicate());
+        log.error(banDup());
         return;
       }
       boolean success = stock_minus_1(voucherId);

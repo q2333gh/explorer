@@ -13,10 +13,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
+import reactor.util.annotation.NonNullApi;
 
 public class RefreshTokenInterceptor implements HandlerInterceptor {
 
-  private StringRedisTemplate stringRedisTemplate;
+  private final StringRedisTemplate stringRedisTemplate;
 
   public RefreshTokenInterceptor(StringRedisTemplate stringRedisTemplate) {
     this.stringRedisTemplate = stringRedisTemplate;
@@ -27,9 +28,9 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
   }
 
   @Override
-  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+  public boolean preHandle
+      (HttpServletRequest request, HttpServletResponse response, Object handler)
       throws Exception {
-    //    RefreshTokenInterceptor logic:
     String token = request.getHeader("authorization");
     if (StrUtil.isBlank(token)) {
       return true;
