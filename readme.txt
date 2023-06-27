@@ -24,3 +24,13 @@ command explain:
 if you want to read all the dependency source code and its doc.
 use this cmd at ./ :
   mvn dependency:resolve dependency:resolve -Dclassifier=javadoc dependency:sources
+
+
+windows nginx start:
+at nginx.exe folder:
+  start ./nginx.exe
+check if nginx is on :
+  Get-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess
+kill nginx:
+  Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess -Force
+
