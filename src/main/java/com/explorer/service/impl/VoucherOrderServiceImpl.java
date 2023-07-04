@@ -9,6 +9,7 @@ import static com.explorer.utils.constants.RedisConstants.SECKILL_STOCK_KEY;
 import static com.explorer.utils.constants.RedisConstants.STREAM_ORDERS;
 import static java.lang.Thread.sleep;
 
+import cn.hutool.Hutool;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.explorer.dto.Result;
@@ -224,7 +225,8 @@ public class VoucherOrderServiceImpl extends
    */
   @SuppressWarnings("unchecked")
   private List<MapRecord<String, Object, Object>> streamDequeue() {
-    return stringRedisTemplate.opsForStream().read(
+    List<MapRecord<String, Object, Object>> records =
+        stringRedisTemplate.opsForStream().read(
         Consumer.from(CONSUMER_GROUP, CONSUMER_NAME),
         StreamReadOptions
             .empty()
@@ -240,6 +242,10 @@ public class VoucherOrderServiceImpl extends
         //          queue have element(s) ->  dequeue now. and keep next dequeue.
         //              will not block 2s. but unblock until the redis-remote signal.
     );
+    if(records == null || records.isEmpty()){
+      return null;
+    }
+    return records;
   }
 
   /**

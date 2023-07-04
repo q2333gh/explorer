@@ -13,8 +13,8 @@ public class SpringBootTest {
   @Test
   void testGetYamlConfigIntoJava(){
     System.out.println("aaaaaa");//to anchor the output place. hah , noob but useful
-    System.out.println(env.getProperty("RedisSingleServerConfig.address"));
-    String pswd = env.getProperty("RedisSingleServerConfig.password");
+    System.out.println(env.getProperty("redis://"+"spring.redis.host"));
+    String pswd = env.getProperty("spring.redis.password");
     System.out.println(pswd);
     assertEquals("123456", pswd);
   }

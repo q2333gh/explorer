@@ -31,25 +31,6 @@ public class CacheClient {
   }
 
 
-  public <R, ID> R queryWithPassThrough(
-      String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback,
-      Long duration, TimeUnit unit) {
-    String key = keyPrefix + id;
-    String json = redisGet(key);    // 1.从redis查询商铺缓存
-    if (StrUtil.isNotBlank(json)) {    // 2.判断是否存在
-      return JSONUtil.toBean(json, type);      // 3.存在，直接返回
-    }
-    if (json != null) {    // 判断命中的是否是空值
-      return null;      // 返回一个错误信息
-    }
-    R ret = dbFallback.apply(id);    // 4.不存在，根据id查询数据库,一个HoF的实例
-    if (ret == null) {    // 5.不存在，返回错误
-      redisSet(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);// 将空值写入redis,防止骇客一直查询数据库造成数据库宕机
-      return null;
-    }
-    this.redisSet(key, ret, duration, unit);    // 6.存在，写入redis
-    return ret;
-  }
 
   /**
    * use mutex to  make parallelization  to serialization, also built in with passThrough
@@ -123,6 +104,27 @@ public class CacheClient {
     }
     return ret;    // 6.4.未获取到锁,返回过期的信息
   }
+
+  public <R, ID> R queryWithPassThrough(
+      String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback,
+      Long duration, TimeUnit unit) {
+    String key = keyPrefix + id;
+    String json = redisGet(key);    // 1.从redis查询商铺缓存
+    if (StrUtil.isNotBlank(json)) {    // 2.判断是否存在
+      return JSONUtil.toBean(json, type);      // 3.存在，直接返回
+    }
+    if (json != null) {    // 判断命中的是否是空值
+      return null;      // 返回一个错误信息
+    }
+    R ret = dbFallback.apply(id);    // 4.不存在，根据id查询数据库,一个HoF的实例
+    if (ret == null) {    // 5.不存在，返回错误
+      redisSet(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);// 将空值写入redis,防止骇客一直查询数据库造成数据库宕机
+      return null;
+    }
+    this.redisSet(key, ret, duration, unit);    // 6.存在，写入redis
+    return ret;
+  }
+
 
   /**
    * Redis get

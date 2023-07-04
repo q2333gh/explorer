@@ -40,4 +40,5 @@ kill nginx:
 prefer: ./nginx.exe -s stop 
 because somehow if force kill nginx by windows. it will automatic reboot itself.
 
-
+### upgrade dependencies(libs)
+  

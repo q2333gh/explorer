@@ -21,9 +21,13 @@ public class RedissonConfig {
   @Bean
   public RedissonClient redissonClient() {
     Config config = new Config();
+    String addr = "redis://"//从yaml 文件里面读
+        +env.getProperty("spring.redis.host")
+        +":"+env.getProperty("spring.redis.port");
+    String pswd = env.getProperty("spring.redis.password");
     config.useSingleServer()
-        .setAddress(env.getProperty("RedisSingleServerConfig.address"))//从yaml 文件里面读的
-        .setPassword(env.getProperty("RedisSingleServerConfig.password"));
+        .setAddress(addr)
+        .setPassword(pswd);
     return Redisson.create(config);
   }
 }

@@ -57,7 +57,7 @@
     <dependency>
       <artifactId>lettuce-core</artifactId>
       <groupId>io.lettuce</groupId>
-      <version>6.1.6.RELEASE</version>
+      <version>6.2.3.RELEASE</version>
     </dependency>
     <dependency>
       <artifactId>commons-pool2</artifactId>
@@ -72,7 +72,7 @@
       <artifactId>mysql-connector-java</artifactId>
       <groupId>mysql</groupId>
       <scope>runtime</scope>
-      <version>5.1.47</version>
+      <version>8.0.33</version>
     </dependency>
     <dependency>
       <artifactId>lombok</artifactId>
@@ -87,29 +87,29 @@
     <dependency>
       <artifactId>mybatis-plus-boot-starter</artifactId>
       <groupId>com.baomidou</groupId>
-      <version>3.4.3</version>
+      <version>3.5.3.1</version>
     </dependency>
     <!--hutool-->
     <dependency>
       <artifactId>hutool-all</artifactId>
       <groupId>cn.hutool</groupId>
-      <version>5.7.17</version>
+      <version>5.8.18</version>
     </dependency>
     <dependency>
       <artifactId>reactor-core</artifactId>
       <groupId>io.projectreactor</groupId>
-      <version>3.4.14</version>
+      <version>3.5.4</version>
     </dependency>
 
     <dependency>
       <artifactId>redisson</artifactId>
       <groupId>org.redisson</groupId>
-      <version>3.13.6</version>
+      <version>3.20.0</version>
     </dependency>
     <dependency>
       <artifactId>aspectjweaver</artifactId>
       <groupId>org.aspectj</groupId>
-      <version>1.9.4</version>
+      <version>1.9.19</version>
     </dependency>
   </dependencies>
   <description>Demo project for Spring Boot</description>
