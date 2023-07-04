@@ -1,3 +1,8 @@
+todo:
+typography problem of .md file
+i cant display space after .nd rendered.
+
+
 ## steps to bootup the project : 
 ### on ubuntu:(need sequential)
   1.mysql installed and running

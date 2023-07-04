@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-class VoucherOrderControllerTest {
+class SeckillTest {
 
   private static final String PHONE_3digits = "155%s";
   private static int USER_NUMBER;//添加用户量
@@ -45,6 +45,16 @@ class VoucherOrderControllerTest {
   private IUserService userService;
   @Resource
   private ObjectMapper mapper;
+
+  @Test
+  @SneakyThrows
+  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
+  void createUser2DB() {
+    USER_NUMBER = 10;
+    List<String> phoneList = genUsersPhones();
+    concurrentCreateUser(phoneList);
+  }
+
 
   private static String nowTime() {
     return DateTime.now().toString()
@@ -99,14 +109,7 @@ class VoucherOrderControllerTest {
     //        System.out.println("文件保存至: "+System.getProperty("user.dir")+fileName);
   }
 
-  @Test
-  @SneakyThrows
-  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
-  void createUser2DB() {
-    USER_NUMBER = 1000;
-    List<String> phoneList = genUsersPhones();
-    concurrentCreateUser(phoneList);
-  }
+
 
   private void concurrentCreateUser(List<String> phoneList) throws Exception {
     ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());

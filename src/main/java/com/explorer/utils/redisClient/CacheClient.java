@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 public class CacheClient {
 
   //thread pool .for performance.don`t need repeat create & destroy with IO.
-  private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
+  private static final ExecutorService CACHE_REBUILD_EXECUTOR =
+      Executors.newFixedThreadPool(10);
 
   private final StringRedisTemplate stringRedisTemplate;
 

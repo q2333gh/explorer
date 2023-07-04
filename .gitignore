@@ -7,7 +7,8 @@ application.yaml
 deploy-remote.sh
 #remove git history:
 #git rm --cached ./src/main/resources/application.yaml
-#git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch *.log" HEAD
+#git rm --cached ./src/main/resources/application-public.yaml
+#git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch *.yaml" HEAD
 
 
 target/
