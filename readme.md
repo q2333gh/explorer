@@ -1,6 +1,6 @@
 todo:
 typography problem of .md file
-I cant display space after .nd rendered.
+I cant display space after .md rendered.
 
 
 ## steps to boot up the project : 
