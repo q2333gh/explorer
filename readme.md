@@ -41,4 +41,24 @@ prefer: ./nginx.exe -s stop
 because somehow if force kill nginx by windows. it will automatic reboot itself.
 
 ### upgrade dependencies(libs)
+  simply click the refresh bottom in IDEA-pom.xml-editorArea-topRight
+
+
+## Bugs remaining now:🕵️💡 
+( a challenge to overcome and transcend,)
+
+the project use StringRedisTemplate  base on lettuce(生菜)
+and the lettuce offer a pool to call redis-server
+user can require connection, but must return after use:
+if dont ret , may cause mem-leak(probably not , the lib it self should handle it ?)
+**but more important: new users need connections from the pool! **
+so far,this msg just show up when prog stop.
+but may cause problem! take your proj as 一期一会
+
+58:03.607  WARN 22108 --- [extShutdownHook] d.r.c.l.LettucePoolingConnectionProvider : LettucePoolingConnectionProvider contains unreleased connections
+Unable to connect to Redis; nested exception is org.springframework.data.redis.connection.PoolException: Could not get a resource from the pool;
+
+
+
+
   
