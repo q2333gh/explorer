@@ -13,7 +13,8 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @TableName("tb_voucher_order")
-public class VoucherOrder implements Serializable {
+public class
+VoucherOrder implements Serializable {
 
   //  @Serial
   //  private static final long serialVersionUID = 1L;

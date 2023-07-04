@@ -233,7 +233,7 @@
           <stringProp name="HTTPSampler.port">8081</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
-          <stringProp name="HTTPSampler.path">/voucher-order/seckill/32</stringProp>
+          <stringProp name="HTTPSampler.path">/voucher-order/seckill/34</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -245,7 +245,7 @@
         </HTTPSamplerProxy>
         <hashTree>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="token-auth" enabled="true">
-            <stringProp name="filename">D:/T/1_code/RealReview/src/main/resources/testTokens/tokens.txt</stringProp>
+            <stringProp name="filename">D:\T\1_code\Explorer\src\test\testTokens\tokens.txt</stringProp>
             <stringProp name="fileEncoding"></stringProp>
             <stringProp name="variableNames">token</stringProp>
             <boolProp name="ignoreFirstLine">false</boolProp>
@@ -382,7 +382,7 @@
                 <connectTime>true</connectTime>
               </value>
             </objProp>
-            <stringProp name="filename">D:\T\1_code\RealReview\src\test\jmeter\dataTree.csv</stringProp>
+            <stringProp name="filename">D:\T\1_code\Explorer\src\test\jmeter\dataTree.csv</stringProp>
           </ResultCollector>
           <hashTree/>
         </hashTree>

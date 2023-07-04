@@ -50,7 +50,7 @@ class SeckillTest {
   @SneakyThrows
   @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
   void createUser2DB() {
-    USER_NUMBER = 10;
+    USER_NUMBER = 1000;
     List<String> phoneList = genUsersPhones();
     concurrentCreateUser(phoneList);
   }
