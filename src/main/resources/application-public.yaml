@@ -30,3 +30,7 @@ logging:
     com.explorer: debug
   pattern:
     dateformat: mm:ss.SSS
+#    redisson
+RedisSingleServerConfig:
+  address: <>
+  password: <>
