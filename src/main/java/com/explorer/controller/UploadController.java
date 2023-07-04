@@ -1,5 +1,7 @@
 package com.explorer.controller;
 
+import static com.explorer.utils.constants.SystemConstants.IMAGE_UPLOAD_DIR;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.explorer.dto.Result;
@@ -28,7 +30,7 @@ public class UploadController {
       // 生成新文件名
       String fileName = newFile(originalFilename);
       // 保存文件
-      image.transferTo(new File(SystemConstants.IMAGE_UPLOAD_DIR, fileName));
+      image.transferTo(new File(IMAGE_UPLOAD_DIR, fileName));
       // 返回结果
       log.debug("文件上传成功，{}", fileName);
       return Result.ok(fileName);
@@ -39,7 +41,7 @@ public class UploadController {
 
   @GetMapping("/blog/delete")
   public Result deleteBlogImg(@RequestParam("name") String filename) {
-    File file = new File(SystemConstants.IMAGE_UPLOAD_DIR, filename);
+    File file = new File(IMAGE_UPLOAD_DIR, filename);
     if (file.isDirectory()) {
       return Result.fail("错误的文件名称");
     }
@@ -53,7 +55,7 @@ public class UploadController {
     int hash = name.hashCode();
     int d1 = hash & 0xF;
     int d2 = (hash >> 4) & 0xF;
-    File dir = new File(SystemConstants.IMAGE_UPLOAD_DIR, StrUtil.format("/blogs/{}/{}", d1, d2));
+    File dir = new File(IMAGE_UPLOAD_DIR, StrUtil.format("/blogs/{}/{}", d1, d2));
     if (!dir.exists()) {
       try {
         dir.mkdirs();

@@ -3,7 +3,7 @@ package com.explorer;
 import com.explorer.entity.User;
 import org.junit.jupiter.api.Test;
 
-public class NormalTest {
+public class BitmapTest {
 
   @Test
   void testBitMap() {
