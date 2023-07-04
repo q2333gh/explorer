@@ -1,9 +1,9 @@
 todo:
 typography problem of .md file
-i cant display space after .nd rendered.
+I cant display space after .nd rendered.
 
 
-## steps to bootup the project : 
+## steps to boot up the project : 
 ### on ubuntu:(need sequential)
   1.mysql installed and running
   2.redis installed and running
@@ -12,7 +12,7 @@ i cant display space after .nd rendered.
   3.tomcat:
     1.springboot
       2.check .yaml  rename the application-public.yml to : src/main/resources/application.yaml
-        check contetns: mysql,redis ip,port,passwd...
+        check contents: mysql,redis ip,port,passwd...
       3.you can package and run proj.jar
           use mvn cmd.
 
@@ -38,7 +38,7 @@ check if nginx is on :
 kill nginx:
   Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess -Force
 prefer: ./nginx.exe -s stop 
-because somehow if force kill nginx by windows. it will automatic reboot itself.
+because somehow if force kill nginx by windows. it will automatically reboot itself.
 
 ### upgrade dependencies(libs)
   simply click the refresh bottom in IDEA-pom.xml-editorArea-topRight
@@ -50,9 +50,9 @@ because somehow if force kill nginx by windows. it will automatic reboot itself.
 the project use StringRedisTemplate  base on lettuce(生菜)
 and the lettuce offer a pool to call redis-server
 user can require connection, but must return after use:
-if dont ret , may cause mem-leak(probably not , the lib it self should handle it ?)
+if the user don't ret , may cause mem-leak(probably not , the lib itself should handle it ?)
 **but more important: new users need connections from the pool! **
-so far,this msg just show up when prog stop.
+so far,this msg just show up when program stop.
 but may cause problem! take your proj as 一期一会
 
 58:03.607  WARN 22108 --- [extShutdownHook] d.r.c.l.LettucePoolingConnectionProvider : LettucePoolingConnectionProvider contains unreleased connections
