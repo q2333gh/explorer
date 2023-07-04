@@ -10,7 +10,6 @@ deploy-remote.sh
 #git rm --cached ./src/main/resources/application-public.yaml
 #git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch *.yaml" HEAD
 
-
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -20,7 +19,7 @@ target/
 
 *.csv
 
-
+bfg-1.14.0.jar
 
 ### STS ###
 .apt_generated
