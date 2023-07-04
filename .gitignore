@@ -1,11 +1,24 @@
 HELP.md
+#The slash (/) and dot (.) symbols have different meanings in the .gitignore file syntax.
+# personal configs:
+#!!! By default, patterns match files in any directory
+#means nothing in front of application.yaml:
+application.yaml
+deploy-remote.sh
+#remove git history:
+#git rm --cached ./src/main/resources/application.yaml
+#git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch *.log" HEAD
+
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 #logs
-.log
 *.log
+
+*.csv
+
 
 
 ### STS ###
