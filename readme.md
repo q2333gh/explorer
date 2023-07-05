@@ -48,9 +48,10 @@ because somehow if force kill nginx by windows. it will automatically reboot its
 ( a challenge to overcome and transcend,)
 
 the project use StringRedisTemplate  base on lettuce(生菜)
-and the lettuce offer a pool to call redis-server
-user can require connection, but must return after use:
-if the user don't ret , may cause mem-leak(probably not , the lib itself should handle it ?)
+and the lettuce offer a pool to call redis-server connection resource,
+**user can require connection, but must return after use**:
+if the user don't ret , may cause mem-leak
+(probably not , the lib itself should handle it ?)
 **but more important: new users need connections from the pool! **
 so far,this msg just show up when program stop.
 but may cause problem! take your proj as 一期一会

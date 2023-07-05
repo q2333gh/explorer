@@ -36,37 +36,10 @@
 
 
     <dependency>
-      <artifactId>spring-boot-starter-data-redis</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>spring-data-redis</artifactId>
-          <groupId>org.springframework.data</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>lettuce-core</artifactId>
-          <groupId>io.lettuce</groupId>
-        </exclusion>
-      </exclusions>
-      <groupId>org.springframework.boot</groupId>
-    </dependency>
-    <dependency>
-      <artifactId>spring-data-redis</artifactId>
-      <groupId>org.springframework.data</groupId>
-      <version>3.0.6</version>
-    </dependency>
-    <dependency>
-      <artifactId>lettuce-core</artifactId>
-      <groupId>io.lettuce</groupId>
-      <version>6.2.3.RELEASE</version>
-    </dependency>
-    <dependency>
       <artifactId>commons-pool2</artifactId>
       <groupId>org.apache.commons</groupId>
     </dependency>
-    <dependency>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <groupId>org.springframework.boot</groupId>
-    </dependency>
+
 
     <dependency>
       <artifactId>mysql-connector-java</artifactId>
@@ -79,33 +52,16 @@
       <groupId>org.projectlombok</groupId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <groupId>org.springframework.boot</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>mybatis-plus-boot-starter</artifactId>
-      <groupId>com.baomidou</groupId>
-      <version>3.5.3.1</version>
-    </dependency>
-    <!--hutool-->
-    <dependency>
-      <artifactId>hutool-all</artifactId>
-      <groupId>cn.hutool</groupId>
-      <version>5.8.18</version>
-    </dependency>
+
+
+
     <dependency>
       <artifactId>reactor-core</artifactId>
       <groupId>io.projectreactor</groupId>
       <version>3.5.4</version>
     </dependency>
 
-    <dependency>
-      <artifactId>redisson</artifactId>
-      <groupId>org.redisson</groupId>
-      <version>3.20.0</version>
-    </dependency>
+
     <dependency>
       <artifactId>aspectjweaver</artifactId>
       <groupId>org.aspectj</groupId>

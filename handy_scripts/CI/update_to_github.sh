@@ -12,11 +12,12 @@ echo ----------status-------------
 git status
 echo ----------done-------------------
 
+#todo:
+#git pull origin master
+#should i pull the newest from remote firstly ?
 
 
 # todo:
-# the commit msg should input from .sh para use "msgs..." to send to .sh file
-
 # display push status instantly , not wait for buffer in cmd output
 #which means , if push need a bit more network. i must after push finish to know the procedure
 #if procedure stucked due to network , i cant see it .
