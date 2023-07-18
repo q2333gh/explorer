@@ -30,7 +30,17 @@ public class CacheClient {
     this.stringRedisTemplate = stringRedisTemplate;
   }
 
+  private static <R> R deserialize(Class<R> type, RedisData redisData) {
+    return JSONUtil.toBean((JSONObject) redisData.getData(), type);
+  }
 
+  private static RedisData deserialize(String json) {
+    return JSONUtil.toBean(json, RedisData.class);
+  }
+
+  private static <R> R getBean(Class<R> type, String shopJson) {
+    return JSONUtil.toBean(shopJson, type);
+  }
 
   /**
    * use mutex to  make parallelization  to serialization, also built in with passThrough
@@ -54,10 +64,12 @@ public class CacheClient {
 
       if (!isLock) {
         Thread.sleep(50);        // 4.3.获取锁失败，休眠并重试
-        return queryWithMutex(keyPrefix, id, type, dbFallback, duration, unit);//goto the beginning to query redis.
+        return queryWithMutex(keyPrefix, id, type, dbFallback, duration,
+            unit);//goto the beginning to query redis.
       }
       ret = dbFallback.apply(id);      // 4.4.获取锁成功，根据id查询数据库
-      Thread.sleep(200);//simulate remote call DB via network.time longer ,need higher reliable of mutex
+      Thread.sleep(
+          200);//simulate remote call DB via network.time longer ,need higher reliable of mutex
       if (ret == null) {      // 5.不存在，返回错误
         redisSet(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);        // 将空值写入redis
         return null;
@@ -125,7 +137,6 @@ public class CacheClient {
     return ret;
   }
 
-
   /**
    * Redis get
    */
@@ -157,7 +168,6 @@ public class CacheClient {
     stringRedisTemplate.delete(key);
   }
 
-
   private void redisSet(String key, Object value, Long duration, TimeUnit unit) {
     stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(value), duration, unit);
   }
@@ -167,18 +177,6 @@ public class CacheClient {
     redisData.setData(value);
     redisData.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(duration)));
     stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisData));    // 写入Redis
-  }
-
-  private static <R> R deserialize(Class<R> type, RedisData redisData) {
-    return JSONUtil.toBean((JSONObject) redisData.getData(), type);
-  }
-
-  private static RedisData deserialize(String json) {
-    return JSONUtil.toBean(json, RedisData.class);
-  }
-
-  private static <R> R getBean(Class<R> type, String shopJson) {
-    return JSONUtil.toBean(shopJson, type);
   }
 
 }

@@ -16,6 +16,6 @@ public class TestJava2Mysql {
   public void run() {
     System.out.println("hello, world!");
 
-    System.out.println("555"+td);
+    System.out.println("555" + td);
   }
 }

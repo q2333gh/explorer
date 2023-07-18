@@ -3,7 +3,6 @@ package com.explorer.config;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -22,8 +21,8 @@ public class RedissonConfig {
   public RedissonClient redissonClient() {
     Config config = new Config();
     String addr = "redis://"//从yaml 文件里面读
-        +env.getProperty("spring.redis.host")
-        +":"+env.getProperty("spring.redis.port");
+        + env.getProperty("spring.redis.host")
+        + ":" + env.getProperty("spring.redis.port");
     String pswd = env.getProperty("spring.redis.password");
     config.useSingleServer()
         .setAddress(addr)

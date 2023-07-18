@@ -9,7 +9,6 @@ import static com.explorer.utils.constants.RedisConstants.SECKILL_STOCK_KEY;
 import static com.explorer.utils.constants.RedisConstants.STREAM_ORDERS;
 import static java.lang.Thread.sleep;
 
-import cn.hutool.Hutool;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.explorer.dto.Result;
@@ -17,8 +16,8 @@ import com.explorer.entity.VoucherOrder;
 import com.explorer.mapper.VoucherOrderMapper;
 import com.explorer.service.ISeckillVoucherService;
 import com.explorer.service.IVoucherOrderService;
-import com.explorer.utils.redisClient.DistributeIdWorker;
 import com.explorer.utils.UserHolder;
+import com.explorer.utils.redisClient.DistributeIdWorker;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -227,22 +226,22 @@ public class VoucherOrderServiceImpl extends
   private List<MapRecord<String, Object, Object>> streamDequeue() {
     List<MapRecord<String, Object, Object>> records =
         stringRedisTemplate.opsForStream().read(
-        Consumer.from(CONSUMER_GROUP, CONSUMER_NAME),
-        StreamReadOptions
-            .empty()
-            .count(1)
-            .block(Duration.ofSeconds(2)),
-        StreamOffset.create(
-            STREAM_ORDERS, ReadOffset.lastConsumed()
-        )
-        //        .block(Duration.ofSeconds(2)) explain :
-        //        2 case:
-        //          queue empty -> redis thread block 2s. and try next time (outside infi-loop)
-        //              java internal timer signal.
-        //          queue have element(s) ->  dequeue now. and keep next dequeue.
-        //              will not block 2s. but unblock until the redis-remote signal.
-    );
-    if(records == null || records.isEmpty()){
+            Consumer.from(CONSUMER_GROUP, CONSUMER_NAME),
+            StreamReadOptions
+                .empty()
+                .count(1)
+                .block(Duration.ofSeconds(2)),
+            StreamOffset.create(
+                STREAM_ORDERS, ReadOffset.lastConsumed()
+            )
+            //        .block(Duration.ofSeconds(2)) explain :
+            //        2 case:
+            //          queue empty -> redis thread block 2s. and try next time (outside infi-loop)
+            //              java internal timer signal.
+            //          queue have element(s) ->  dequeue now. and keep next dequeue.
+            //              will not block 2s. but unblock until the redis-remote signal.
+        );
+    if (records == null || records.isEmpty()) {
       return null;
     }
     return records;

@@ -5,7 +5,6 @@ import static com.explorer.utils.constants.SystemConstants.IMAGE_UPLOAD_DIR;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.explorer.dto.Result;
-import com.explorer.utils.constants.SystemConstants;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -21,6 +20,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("upload")
 public class UploadController {
+
+  private static String randomUUID() {
+    return UUID.randomUUID().toString();
+  }
 
   @PostMapping("blog")
   public Result uploadImage(@RequestParam("file") MultipartFile image) {
@@ -60,14 +63,10 @@ public class UploadController {
       try {
         dir.mkdirs();
       } catch (Exception e) {
-        log.error("mkdir error!",e);
+        log.error("mkdir error!", e);
         throw new RuntimeException(e);
       }
     }
     return StrUtil.format("/blogs/{}/{}/{}.{}", d1, d2, name, suffix);
-  }
-
-  private static String randomUUID() {
-    return UUID.randomUUID().toString();
   }
 }

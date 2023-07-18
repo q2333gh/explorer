@@ -29,16 +29,6 @@ public class DistributeIdWorker {
   public DistributeIdWorker(StringRedisTemplate stringRedisTemplate) {
     this.stringRedisTemplate = stringRedisTemplate;
   }
-  public long nextId(String keyPrefix) {
-    // 1.生成时间戳
-    LocalDateTime now = LocalDateTime.now();
-    long interval = getInterval(now);
-    // 2.1.获取当前日期字符串，精确到天: 1.每天key容量几十亿 2.方便统计筛选 如: date = 2023:02:05
-    String date = getDate(now);
-    // 2.2.Redis 自增长
-    long serial = incr(keyPrefix, date);
-    return cat(interval, serial);
-  }
 
   private static long getInterval(LocalDateTime now) {
     long nowSecond = now.toEpochSecond(ZoneOffset.UTC);
@@ -56,7 +46,16 @@ public class DistributeIdWorker {
     return now.format(DateTimeFormatter.ofPattern("yyyy:MM:dd"));
   }
 
-
+  public long nextId(String keyPrefix) {
+    // 1.生成时间戳
+    LocalDateTime now = LocalDateTime.now();
+    long interval = getInterval(now);
+    // 2.1.获取当前日期字符串，精确到天: 1.每天key容量几十亿 2.方便统计筛选 如: date = 2023:02:05
+    String date = getDate(now);
+    // 2.2.Redis 自增长
+    long serial = incr(keyPrefix, date);
+    return cat(interval, serial);
+  }
 
   private long incr(String keyPrefix, String date) {
     Long increment = stringRedisTemplate.opsForValue().increment("icr:" + keyPrefix + ":" + date);

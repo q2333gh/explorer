@@ -4,12 +4,12 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RandomUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.explorer.dto.LoginFormDTO;
 import com.explorer.dto.Result;
 import com.explorer.entity.User;
 import com.explorer.service.IUserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -45,16 +45,6 @@ class SeckillTest {
   private IUserService userService;
   @Resource
   private ObjectMapper mapper;
-
-  @Test
-  @SneakyThrows
-  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
-  void createUser2DB() {
-    USER_NUMBER = 1000;
-    List<String> phoneList = genUsersPhones();
-    concurrentCreateUser(phoneList);
-  }
-
 
   private static String nowTime() {
     return DateTime.now().toString()
@@ -109,7 +99,14 @@ class SeckillTest {
     //        System.out.println("文件保存至: "+System.getProperty("user.dir")+fileName);
   }
 
-
+  @Test
+  @SneakyThrows
+  @DisplayName("创建用户到数据库,且登录,保存tokens到文件")
+  void createUser2DB() {
+    USER_NUMBER = 1000;
+    List<String> phoneList = genUsersPhones();
+    concurrentCreateUser(phoneList);
+  }
 
   private void concurrentCreateUser(List<String> phoneList) throws Exception {
     ExecutorService executorService = ThreadUtil.newExecutor(phoneList.size());
